@@ -1,25 +1,4 @@
-// Make straight flush and full house functions
 
-
-
-
-
-#include <cstdlib>
-#include <iostream>
-#include <map>
-#include <string>
-#include <limits>
-#include <iomanip>
-
-struct Card
-{
-    int number;
-    int suit;
-};
-
-struct Eval_Card
-{
-    int player_number;
     int high_card;
     int points;
     int kicker1;
