@@ -1,4 +1,8 @@
 
+var tet =0;
+
+
+
     int high_card;
     int points;
     int kicker1;
