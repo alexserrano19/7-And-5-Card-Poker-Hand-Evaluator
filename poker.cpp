@@ -53,9 +53,9 @@ bool operator < (const Card& t1, const Card& t2)
 
 int main()
 {
-    std::cout << "\n    <<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>> \n";
-    std::cout << "<<<<<<< !! LET'S PLAY POKER !! >>>>>>>";
-    std::cout << "\n    <<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>> \n\n";
+    std::cout << "\n========---------------------------------========\n";
+    std::cout << " ***** !! pOkEr PoKeR POKER PoKeR pOkEr !! ***** \n";
+    std::cout << "========---------------------------------========\n\n";
 
     ////////// DECLARATION
     // Seeds time for random number generation
