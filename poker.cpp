@@ -4,7 +4,7 @@
 #include <string>
 #include <limits>
 
-// Terminal command to compile: g++ poker1.cpp -std=c++0x
+// Terminal command to compile: g++ poker.cpp -std=c++0x
 // Terminal command to execute: ./a.out
 
 struct Card
@@ -37,6 +37,7 @@ int* pair(struct Card arr[]);
 int* two_pair(struct Card arr[]);
 int* trips(struct Card arr[]);
 int* straight(struct Card arr[]);
+int* straight_helper(struct Card arr[]);
 int* flush(struct Card arr[]);
 int* full_house(struct Card arr[]);
 int* quads(struct Card arr[]);
@@ -76,7 +77,7 @@ int main()
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "\nONLY A MAXIMUM OF 22 OPPONENTS ARE POSSIBLE!\n";
         }
-        if (opponents <= 0)
+        else if (opponents < 1)
         {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -140,7 +141,7 @@ int main()
 
     while (player_card_counter < (opponents+1)*2)
     {
-        // Sets the index for winner array
+        // Sets the index for possible_winner array
         index_counter++;
 
         // Copies the communnity cards into evaluation array
@@ -235,6 +236,7 @@ int main()
         #pragma region Memory Deallocation
 
         // Deallocates memory from the functions
+        // Sets pointers to null value
         delete [] straightflush1; 
         straightflush1 = 0;
         delete [] quads1; 
@@ -262,27 +264,27 @@ int main()
 
     ////////// DECLARATION
     int* wins;
-    int same_points_counter = 0, true_winner = 0;
-    bool multiple_wins = false;
+    int same_points_counter = 0, true_winner = 0, number_of_players_tied = 0;
     ////////// END DECLARATION
 
-    /*  The rest of this program determines the winner based on kickers and highcards
-    First the program is sorted by player points, and the highest players points are 
-    compared, then the high card (if need be), then the kickers (if need be). Some only 
-    require the highcards to be compared or some of the kickers. */
+    /*  The rest of this program determines the winner based on kickers and highcards.
+    First the program is sorted by player points, and the players with the highest 
+    points are compared to each other based on their highcard and then the kickers 
+    (if need be). Some only require the highcards to be compared or some of the kickers. */
 
-    // sort_by, Sorts player hands by points (whatever is written in the first parameter)
+    // sort_by, Sorts player hands by whatever is written in the first parameter i.e. "points"
     sort_by("points", possible_winner, opponents+1);
-    // Counts the amount of players that have the same amount of points (whatever is written in the first parameter)
+    // counter_for, Counts the amount of players that have the same amount of whatever is written in the first parameter i.e. "points"
     same_points_counter = counter_for("points", possible_winner, opponents+1);
     
-    // If no more than 1 player is counted to have a certain amount of points, then they are the true winner
     /**** The rest of the program follows a similar pattern to the one explained above ****/
     if (same_points_counter == 1)
         true_winner = possible_winner[0].player_number;
     else
     {
+        ////////// DECLARATION
         int same_high_card_counter = 1;
+        ////////// END DECLARATION
 
         sort_by("highcard", possible_winner, same_points_counter);
         same_high_card_counter = counter_for("highcard", possible_winner, same_points_counter);
@@ -292,16 +294,16 @@ int main()
             (same_high_card_counter > 1 && possible_winner[0].points == 160))
         {
             wins = multiple_winners(possible_winner, same_high_card_counter);
-            multiple_wins = true;
+            number_of_players_tied = same_high_card_counter;
         }
         else if (same_high_card_counter > 1)
         {
-            int same_kicker_1_counter = 1;
+            ////////// DECLARATION
+            int same_kicker_1_counter = 1,  same_kicker_2_counter = 1, same_kicker_3_counter = 1, same_kicker_4_counter = 1;
+            ////////// END DECLARATION
 
             sort_by("kicker1", possible_winner, same_high_card_counter);
             same_kicker_1_counter = counter_for("kicker1", possible_winner, same_high_card_counter);
-
-            int same_kicker_2_counter = 1, same_kicker_3_counter = 1, same_kicker_4_counter = 1;
 
             switch (possible_winner[0].points)
             {
@@ -311,7 +313,7 @@ int main()
                     if (same_kicker_1_counter > 1)
                     {
                         wins = multiple_winners(possible_winner, same_high_card_counter);
-                        multiple_wins = true;
+                        number_of_players_tied = same_high_card_counter;
                     }
                     else
                         true_winner = compare_kicker("kicker1", possible_winner, same_high_card_counter);
@@ -328,7 +330,7 @@ int main()
                         if (same_kicker_2_counter > 1)
                         {
                             wins = multiple_winners(possible_winner, same_kicker_2_counter);
-                            multiple_wins = true;
+                            number_of_players_tied = same_kicker_2_counter;
                         }
                         else
                             true_winner = compare_kicker("kicker2", possible_winner, same_kicker_1_counter);
@@ -352,7 +354,7 @@ int main()
                             if (same_kicker_3_counter > 1)
                             {
                                 wins = multiple_winners(possible_winner, same_kicker_3_counter);
-                                multiple_wins = true;
+                                number_of_players_tied = same_kicker_3_counter;
                             }
                             else
                                 true_winner = compare_kicker("kicker3", possible_winner, same_kicker_2_counter);
@@ -385,7 +387,7 @@ int main()
                                 if (same_kicker_4_counter > 1)
                                 {
                                     wins = multiple_winners(possible_winner, same_kicker_4_counter);
-                                    multiple_wins = true;
+                                    number_of_players_tied = same_kicker_4_counter;
                                 }
                                 else
                                     true_winner = compare_kicker("kicker4", possible_winner, same_kicker_3_counter);
@@ -411,12 +413,12 @@ int main()
 
     #pragma region Handles Output For Winning Hand(s)
 
-    if (multiple_wins)
+    if (number_of_players_tied > 0)
     {
         std::cout << "\nITS A TIE BETWEEN PLAYERS";
-        for (int i = 2; i < (wins[1])+1; i++)
+        for (int i = 0; i < number_of_players_tied-1; i++)
             std::cout << " #" << wins[i] << ",";
-        std::cout << " and #" << wins[(wins[1])+1] << "!\n\n";
+        std::cout << " and #" << wins[number_of_players_tied-1] << "!\n\n";
 
         delete [] wins;
         wins = 0;
@@ -439,7 +441,7 @@ int main()
 ////////////////////////////////////////////////////////////////////////////
 
 
-// Sorts array from highest number to lowest card number regardless of suit
+// Sorts array from highest card number to lowest card number regardless of suit
 void sort_card_number(struct Card arr[], int size_of_array)
 {
     for (int i = 0; i < size_of_array-1; i++)
@@ -474,59 +476,43 @@ void set_stats(struct Player_Hand arr[], int index, int points_earned, int high_
 // Sorts player hand array based on specified parameters from highest value to lowest value
 void sort_by(std::string choice, struct Player_Hand arr[], int size_of_array)
 {
-    bool swap_elements = false;
     for (int i = 0; i < size_of_array-1; i++)
     {
         for (int j = 0; j < size_of_array-i-1; j++)
         {
-            if (choice == "highcard" && arr[j].high_card < arr[j+1].high_card)
-                swap_elements = true;
-            else if (choice == "points" && arr[j].points < arr[j+1].points)
-                swap_elements = true;
-            else if (choice == "kicker1" && arr[j].kicker1 < arr[j+1].kicker1)
-                swap_elements = true;
-            else if (choice == "kicker2" && arr[j].kicker2 < arr[j+1].kicker2)
-                swap_elements = true;
-            else if (choice == "kicker3" && arr[j].kicker3 < arr[j+1].kicker3)
-                swap_elements = true;
-            else if (choice == "kicker4" && arr[j].kicker4 < arr[j+1].kicker4)
-                swap_elements = true;
-
-            if (swap_elements)
+            if ((choice == "highcard" && arr[j].high_card < arr[j+1].high_card) ||
+                (choice == "points" && arr[j].points < arr[j+1].points)    ||
+                (choice == "kicker1" && arr[j].kicker1 < arr[j+1].kicker1) ||
+                (choice == "kicker2" && arr[j].kicker2 < arr[j+1].kicker2) ||
+                (choice == "kicker3" && arr[j].kicker3 < arr[j+1].kicker3) ||
+                (choice == "kicker4" && arr[j].kicker4 < arr[j+1].kicker4))
             {
                 Player_Hand temp;
                 temp = arr[j];
                 arr[j] = arr[j+1];
                 arr[j+1] = temp;
             }
-            swap_elements = false;
         }
     }
 }
 
 
-// Returns the counted amount of specified elements that have the same value
+// Returns the amount of players that have the same value of the "choice" parameter
 int counter_for(std::string choice, struct Player_Hand arr[], int size_of_array)
 {
-    int new_counter = 1, hold = 0;
+    int new_counter = 1;
     for (int i = 0; i < size_of_array-1; i++)
     {
-        hold = new_counter;
-
-        if (choice == "highcard" && arr[i].high_card == arr[i+1].high_card)
+        if ((choice == "highcard" && arr[i].high_card == arr[i+1].high_card) ||
+            (choice == "points" && arr[i].points == arr[i+1].points)    ||
+            (choice == "kicker1" && arr[i].kicker1 == arr[i+1].kicker1) ||
+            (choice == "kicker2" && arr[i].kicker2 == arr[i+1].kicker2) ||
+            (choice == "kicker3" && arr[i].kicker3 == arr[i+1].kicker3) ||
+            (choice == "kicker4" && arr[i].kicker4 == arr[i+1].kicker4))
+        {
             new_counter++;
-        else if (choice == "points" && arr[i].points == arr[i+1].points)
-            new_counter++;
-        else if (choice == "kicker1" && arr[i].kicker1 == arr[i+1].kicker1)
-            new_counter++;
-        else if (choice == "kicker2" && arr[i].kicker2 == arr[i+1].kicker2)
-            new_counter++;
-        else if (choice == "kicker3" && arr[i].kicker3 == arr[i+1].kicker3)
-            new_counter++;
-        else if (choice == "kicker4" && arr[i].kicker4 == arr[i+1].kicker4)
-            new_counter++;
-
-        if (hold == new_counter)
+        }
+        else
             break;
     }
 
@@ -534,7 +520,7 @@ int counter_for(std::string choice, struct Player_Hand arr[], int size_of_array)
 }
 
 
-// Compares kickers and retunrs the larger value
+// Compares kickers and returns the player number who holds the larger value
 int compare_kicker(std::string choice, struct Player_Hand arr[], int size_of_array)
 {
     int true_winner = 0;
@@ -577,34 +563,22 @@ int compare_kicker(std::string choice, struct Player_Hand arr[], int size_of_arr
 }
 
 
-// Finds the player number of the multiple winners
+// Returns the player numbers that tied
 int* multiple_winners(struct Player_Hand arr[], int size_of_array)
 {
-    int j = 2, counter = 1;
-    int *status = new int[size_of_array+2];
+    int *status = new int[size_of_array];
 
-    for (int i = 0; i < size_of_array-1; i++)
-    {
-        counter++;
-        status[j] = arr[i].player_number;
-        j++;
-        if (i == size_of_array)
-            status[j] = arr[i+1].player_number;
-    }
-
-    // status[0] indicates that there were multiple winners (1 = true, 0 = false)
-    status[0] = 1;
-    // status[1] = how many ties there are
-    status[1] = counter;
+    for (int i = 0; i < size_of_array; i++)
+        status[i] = arr[i].player_number;
 
     return status;
 }
 
 
 //////////////////// HAND STRENGTH FUNCTIONS ////////////////////
-/* SIDE NOTE: The following functions will return an array "status" 
-that returns several values to determine serveral factors, which
-are mentioned specifically at the end of each function */
+/* SIDE NOTE: The following functions will return a pointer as an
+array that returns several values to determine serveral factors, 
+which are mentioned specifically at the end of each function */
 /* Remember: Aces can act as the number 1 and 14 */
  
 
@@ -623,7 +597,7 @@ int* high_card(struct Card arr[])
     for (int i = 0; i < 5; i++)
         status[i] = arr[i].number;
 
-    // status[0-4] = kickers
+    // status[0-4] = highcard and kickers
     return status;
 }
 
@@ -672,7 +646,7 @@ int* pair(struct Card arr[])
     for (int i = 0; i < 7; i++)
         arr[i] = hold[i];
 
-    /* status[0] = wether single pair is present or not, status[1] = highcard of single pair, status[2] = first kicker
+    /* status[0] = wether or not there is a single pair, status[1] = highcard of single pair, status[2] = first kicker
     status[3] = second kicker, status[4] = last kicker */
     return status;
 }
@@ -694,21 +668,23 @@ int* two_pair(struct Card arr[])
 
     sort_card_number(arr, 7);
 
-    int counter = 0;
+    bool check_second_pair = false;
     // Finds two pairs and sets their values
     for (int i = 0; i < 7; i++)
     {
         if (arr[i].number == arr[i+1].number)
         {
-            counter++;
-            if (counter > 1)
+            if (check_second_pair)
             {
                 status[0] = 1;
                 status[2] = arr[i].number;
                 break;
             }
             else
+            {
                 status[1] = arr[i].number;
+                check_second_pair = true;
+            }
         }
     }
 
@@ -727,7 +703,7 @@ int* two_pair(struct Card arr[])
     for (int i = 0; i < 7; i++)
         arr[i] = hold[i];
 
-    /* status[0] = wether a two pair is present or not, status[1] = value of highest pair, 
+    /* status[0] = wether or not there is a two pair, status[1] = value of highest pair, 
     status[2] = value of second highest pair, status[3] = kicker */
     return status;
 }
@@ -776,7 +752,7 @@ int* trips(struct Card arr[])
     for (int i = 0; i < 7; i++)
         arr[i] = hold[i];
 
-    /* status[0] = wether or not trips are present, status[1] = trips high card, 
+    /* status[0] = wether or not there are trips, status[1] = trips high card, 
     status[2] = first kicker, status[3] = second kicker */
     return status;
 }
@@ -807,6 +783,32 @@ int* straight(struct Card arr[])
         }
     }
 
+    // Checks for straight
+    int* straight1 = straight_helper(arr);
+
+    status[0] = straight1[0];
+    status[1] = straight1[1];
+
+    delete [] straight1;
+    straight1 = 0;
+
+    // Copies back hold array into original array after manipulation
+    for (int i = 0; i < 7; i++)
+        arr[i] = hold[i];
+
+    // status[0] = wether or not there is a straight, status[1] = highcard of straight
+    return status;
+}
+
+int* straight_helper(struct Card arr[])
+{
+    int *status = new int[2];
+    Card hold[7];
+
+    // Creates a hold array before manipulation, so original array is not changed
+    for (int i = 0; i < 7; i++)
+        hold[i] = arr[i];
+
     sort_card_number(arr, 7);
     
     bool ace = false;
@@ -829,6 +831,7 @@ int* straight(struct Card arr[])
             }
         }
 
+        // Exits loop after checking for a straight with an ace
         if (ace)
             break;
 
@@ -846,8 +849,8 @@ int* straight(struct Card arr[])
         }
 
     } while (ace);
-
-    // Copies back hold array into original array after manipulation
+    
+    // Hold array copies old values back after collecting information about the array for the function
     for (int i = 0; i < 7; i++)
         arr[i] = hold[i];
 
@@ -883,71 +886,36 @@ int* flush(struct Card arr[])
     if (counter1 < 5 && counter2 < 5 && counter3 < 5 && counter4 < 5)
         return status;
 
+    // Changes Ace value from 1 to 14
+    for (int i = 0; i < 7; i++)
+        if (arr[i].number == 1)
+            arr[i].number = 14;
+
     sort_card_number(arr, 7);
 
-    bool ace = false;
-    // Similar to straight function, finds highest number for the straight
-    do
+    // Finds flush card numbers and suit number
+    for (int i = 1; i < 5; i++)
     {
-        // If ace is present algorithm will check for ace high straight
-        if (ace)
-            sort_card_number(arr, 7);
-
-        // Sets the highcard and kickers
-        for (int i = 1; i < 5; i++)
+        if ((counter1 >= 5 && i == 1) || (counter2 >= 5 && i == 2) ||
+            (counter3 >= 5 && i == 3) || (counter4 >= 5 && i == 4))
         {
-            if ((counter1 >= 5 && i == 1) || (counter2 >= 5 && i == 2) ||
-                (counter3 >= 5 && i == 3) || (counter4 >= 5 && i == 4))
+            status[0] = 1;
+            status[6] = i;
+            int index_counter = 0;
+            // Sets the high_card and kickers
+            for (int j = 0; j < 7; j++)
             {
-                status[0] = 1;
-                status[6] = i;
-                int status_counter = 0;
-                for (int j = 0; j < 7; j++)
+                if (arr[j].suit == i)
                 {
-                    if (arr[j].suit == i)
-                    {
-                        status_counter++;
-                        switch(status_counter)
-                        {
-                            case 1:
-                                status[1] = arr[j].number;
-                                break;
-                            case 2:
-                                status[2] = arr[j].number;
-                                break;
-                            case 3:
-                                status[3] = arr[j].number;
-                                break;
-                            case 4:
-                                status[4] = arr[j].number;
-                                break;
-                            case 5:
-                                status[5] = arr[j].number;
-                                break;
-                        }
-                    }
+                    index_counter++;
+                    if (index_counter > 5)
+                        break;
+                    status[index_counter] = arr[j].number;
                 }
-                break;
             }
-        }
-
-        if (ace)
             break;
-
-        // Checks if ace is present
-        if (!ace)
-        {
-            for (int i = 0; i < 7; i++)
-            {
-                if (arr[i].number == 1)
-                {
-                    arr[i].number = 14;
-                    ace = true;
-                }
-            }
         }
-
-    } while (ace);
+    }
 
     // Hold array copies old values back after collecting information about the array for the function
     for (int i = 0; i < 7; i++)
@@ -1031,6 +999,11 @@ int* quads(struct Card arr[])
     for (int i = 0; i < 7; i++)
         hold[i] = arr[i];
 
+    // Changes Ace value from 1 to 14
+    for (int i = 0; i < 7; i++)
+        if (arr[i].number == 1)
+            arr[i].number = 14;
+
     sort_card_number(arr, 7);
 
     // Checks if there are quads present
@@ -1076,7 +1049,7 @@ int* straightflush(struct Card arr[])
     int* flush1 = flush(arr);
     int counter = 0;
     bool skip_straight = false;
-    // Chekcs for a flush
+    // Checks for a flush
     if (flush1[0] == 1)
     {
         // If a card suit is not corresponding to the flush it is removed to prevent interference with algorithm
@@ -1098,45 +1071,14 @@ int* straightflush(struct Card arr[])
     // Checks for a straight
     if (!skip_straight)
     {
-        sort_card_number(arr, 7);
-    
-        bool ace = false;
-        // Determines if there is a straight taking into account the ace as number 1 and 14
-        do
-        {
-            // If ace is present algorithm will check for ace high straight
-            if (ace)
-                sort_card_number(arr, 7);
+        // Checks for straight
+        int* straight1 = straight_helper(arr);
 
-            // Checks for straight
-            for (int i = 0; i < 3-counter; i++)
-            {
-                if (arr[i].number == arr[i+1].number+1 && arr[i+1].number == arr[i+2].number+1 &&
-                    arr[i+2].number == arr[i+3].number+1 && arr[i+3].number == arr[i+4].number+1)
-                {
-                    status[0] = 1;
-                    status[1] = arr[i].number;
-                    break;
-                }
-            }
+        status[0] = straight1[0];
+        status[1] = straight1[1];
 
-            if (ace)
-                break;
-
-            // Checks if ace is present
-            if (!ace)
-            {
-                for (int i = 0; i < 7; i++)
-                {
-                    if (arr[i].number == 1)
-                    {
-                        arr[i].number = 14;
-                        ace = true;
-                    }
-                }
-            }
-
-        } while (ace);
+        delete [] straight1;
+        straight1 = 0;
     }
     
     // Copies back hold array into original array after manipulation
