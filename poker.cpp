@@ -30,6 +30,7 @@ void sort_by(std::string choice, struct Player_Hand arr[], int size_of_array);
 int counter_for(std::string choice, struct Player_Hand arr[], int size_of_array);
 int compare_kicker(std::string choice, struct Player_Hand arr[], int size_of_array);
 int* multiple_winners(struct Player_Hand arr[], int size_of_array);
+void change_card_value(struct Card arr[], int value_compared, int new_value);
 
 // Card strength functions
 int* high_card(struct Card arr[]);
@@ -37,7 +38,6 @@ int* pair(struct Card arr[]);
 int* two_pair(struct Card arr[]);
 int* trips(struct Card arr[]);
 int* straight(struct Card arr[]);
-int* straight_helper(struct Card arr[]);
 int* flush(struct Card arr[]);
 int* full_house(struct Card arr[]);
 int* quads(struct Card arr[]);
@@ -154,7 +154,7 @@ int main()
             evaluation[i] = player_card[player_card_counter];
             player_card_counter++;
         }
-
+        
         #pragma region Outputting Player Hand
         
         // Prints out player number
@@ -575,6 +575,15 @@ int* multiple_winners(struct Player_Hand arr[], int size_of_array)
 }
 
 
+// Change value of card to new value, i.e. changing ace value from 1 to 14
+void change_card_value(struct Card arr[], int value_compared, int new_value)
+{
+    for (int i = 0; i < 7; i++)
+        if (arr[i].number == value_compared)
+            arr[i].number = new_value;
+}
+
+
 //////////////////// HAND STRENGTH FUNCTIONS ////////////////////
 /* SIDE NOTE: The following functions will return a pointer as an
 array that returns several values to determine serveral factors, 
@@ -586,11 +595,7 @@ int* high_card(struct Card arr[])
 {
     int* status = new int[5];
 
-    // Changes Ace value from 1 to 14
-    for (int i = 0; i < 7; i++)
-        if (arr[i].number == 1)
-            arr[i].number = 14;
-
+    change_card_value(arr, 1, 14);
     sort_card_number(arr, 7);
 
     // Copies 5 highest cards into status array
@@ -611,11 +616,7 @@ int* pair(struct Card arr[])
     for (int i = 0; i < 7; i++)
         hold[i] = arr[i];
 
-    // Changes Ace value from 1 to 14
-    for (int i = 0; i < 7; i++)
-        if (arr[i].number == 1)
-            arr[i].number = 14;
-
+    change_card_value(arr, 1, 14);
     sort_card_number(arr, 7);
 
     // Finds the card number of the pair
@@ -632,10 +633,7 @@ int* pair(struct Card arr[])
     // If a pair is present, this sets its 3 kickers
     if (status[0] == 1)
     {
-        for (int i = 0; i < 7; i++)
-            if (arr[i].number == status[1])
-                arr[i].number = -1;
-
+        change_card_value(arr, status[1], -1);
         sort_card_number(arr, 7);
         status[2] = arr[0].number;
         status[3] = arr[1].number;
@@ -661,11 +659,7 @@ int* two_pair(struct Card arr[])
     for (int i = 0; i < 7; i++)
         hold[i] = arr[i];
 
-    // Changes Ace value from 1 to 14
-    for (int i = 0; i < 7; i++)
-        if (arr[i].number == 1)
-            arr[i].number = 14;
-
+    change_card_value(arr, 1, 14);
     sort_card_number(arr, 7);
 
     bool check_second_pair = false;
@@ -691,10 +685,8 @@ int* two_pair(struct Card arr[])
     // Sets kicker if two pairs are present
     if (status[0] == 1)
     {
-        for (int i = 0; i < 7; i++)
-            if (arr[i].number == status[1] || arr[i].number == status[2])
-                arr[i].number = -1;
-
+        change_card_value(arr, status[1], -1);
+        change_card_value(arr, status[2], -1);
         sort_card_number(arr, 7);
         status[3] = arr[0].number;
     }
@@ -718,11 +710,7 @@ int* trips(struct Card arr[])
     for (int i = 0; i < 7; i++)
         hold[i] = arr[i];
 
-    // Changes Ace value from 1 to 14
-    for (int i = 0; i < 7; i++)
-        if (arr[i].number == 1)
-            arr[i].number = 14;
-
+    change_card_value(arr, 1, 14);
     sort_card_number(arr, 7);
 
     // Finds if trips are present and sets value
@@ -739,10 +727,7 @@ int* trips(struct Card arr[])
     // Sets two kickers if trips are present
     if (status[0] == 1)
     {
-        for (int i = 0; i < 7; i++)
-            if (arr[i].number == status[1])
-                arr[i].number = -1;
-        
+        change_card_value(arr, status[1], -1);
         sort_card_number(arr, 7);
         status[2] = arr[0].number;
         status[3] = arr[1].number;
@@ -782,32 +767,6 @@ int* straight(struct Card arr[])
             i = 0;
         }
     }
-
-    // Checks for straight
-    int* straight1 = straight_helper(arr);
-
-    status[0] = straight1[0];
-    status[1] = straight1[1];
-
-    delete [] straight1;
-    straight1 = 0;
-
-    // Copies back hold array into original array after manipulation
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
-
-    // status[0] = wether or not there is a straight, status[1] = highcard of straight
-    return status;
-}
-
-int* straight_helper(struct Card arr[])
-{
-    int *status = new int[2];
-    Card hold[7];
-
-    // Creates a hold array before manipulation, so original array is not changed
-    for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
 
     sort_card_number(arr, 7);
     
@@ -849,8 +808,8 @@ int* straight_helper(struct Card arr[])
         }
 
     } while (ace);
-    
-    // Hold array copies old values back after collecting information about the array for the function
+
+    // Copies back hold array into original array after manipulation
     for (int i = 0; i < 7; i++)
         arr[i] = hold[i];
 
@@ -886,20 +845,19 @@ int* flush(struct Card arr[])
     if (counter1 < 5 && counter2 < 5 && counter3 < 5 && counter4 < 5)
         return status;
 
-    // Changes Ace value from 1 to 14
-    for (int i = 0; i < 7; i++)
-        if (arr[i].number == 1)
-            arr[i].number = 14;
-
+    change_card_value(arr, 1, 14);
     sort_card_number(arr, 7);
 
     // Finds flush card numbers and suit number
     for (int i = 1; i < 5; i++)
     {
-        if ((counter1 >= 5 && i == 1) || (counter2 >= 5 && i == 2) ||
-            (counter3 >= 5 && i == 3) || (counter4 >= 5 && i == 4))
+        if ((counter1 >= 5 && i == 1) || 
+            (counter2 >= 5 && i == 2) ||
+            (counter3 >= 5 && i == 3) || 
+            (counter4 >= 5 && i == 4))
         {
             status[0] = 1;
+            // Sets the suit of the flush
             status[6] = i;
             int index_counter = 0;
             // Sets the high_card and kickers
@@ -936,11 +894,7 @@ int* full_house(struct Card arr[])
     for (int i = 0; i < 7; i++)
         hold[i] = arr[i];
 
-    // Changes Ace value from 1 to 14
-    for (int i = 0; i < 7; i++)
-        if (arr[i].number == 1)
-            arr[i].number = 14;
-
+    change_card_value(arr, 1, 14);
     sort_card_number(arr, 7);
 
     bool trips_present = false, pair_present = false;
@@ -958,10 +912,7 @@ int* full_house(struct Card arr[])
     if (trips_present)
     {
         // Removes trips so trips arent confused as pairs
-        for (int i = 0; i < 7; i++)
-            if (arr[i].number == status[1])
-                arr[i].number = -1;
-
+        change_card_value(arr, status[1], -1);
         sort_card_number(arr, 7);
         
         // Checks for a pair
@@ -976,7 +927,6 @@ int* full_house(struct Card arr[])
         }
     }
 
-    // If pair and trips are present, then full house is true
     if (pair_present && trips_present)
         status[0] = 1;
 
@@ -999,11 +949,7 @@ int* quads(struct Card arr[])
     for (int i = 0; i < 7; i++)
         hold[i] = arr[i];
 
-    // Changes Ace value from 1 to 14
-    for (int i = 0; i < 7; i++)
-        if (arr[i].number == 1)
-            arr[i].number = 14;
-
+    change_card_value(arr, 1, 14);
     sort_card_number(arr, 7);
 
     // Checks if there are quads present
@@ -1020,10 +966,7 @@ int* quads(struct Card arr[])
     // If quads are present, the kicker is added
     if (status[0] == 1)
     {
-        for (int i = 0; i < 7; i++)
-            if (arr[i].number == status[1])
-                arr[i].number = -1;
-    
+        change_card_value(arr, status[1], -1);
         sort_card_number(arr, 7);
         status[2] = arr[0].number;
     }
@@ -1047,11 +990,11 @@ int* straightflush(struct Card arr[])
         hold[i] = arr[i];
 
     int* flush1 = flush(arr);
-    int counter = 0;
-    bool skip_straight = false;
+    bool flush_present = false;
     // Checks for a flush
     if (flush1[0] == 1)
     {
+        flush_present = true;
         // If a card suit is not corresponding to the flush it is removed to prevent interference with algorithm
         for (int i = 0; i < 7; i++)
         {
@@ -1062,24 +1005,28 @@ int* straightflush(struct Card arr[])
             }
         }
     }
-    else
-        skip_straight = true;
     
     delete [] flush1;
     flush1 = 0;
 
+    bool straight_present = false;
     // Checks for a straight
-    if (!skip_straight)
+    if (flush_present)
     {
-        // Checks for straight
-        int* straight1 = straight_helper(arr);
+        int* straight1 = straight(arr);
 
-        status[0] = straight1[0];
-        status[1] = straight1[1];
-
+        if (straight1[0] == 1)
+        {
+            status[1] = straight1[1];
+            straight_present = true;
+        }
+        
         delete [] straight1;
         straight1 = 0;
     }
+
+    if (straight_present && flush_present)
+        status[0] = 1;
     
     // Copies back hold array into original array after manipulation
     for (int i = 0; i < 7; i++)
