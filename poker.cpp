@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <limits>
+#include <iomanip>
 
 // Terminal command to compile: g++ poker.cpp -std=c++0x
 // Terminal command to execute: ./a.out
@@ -67,6 +68,13 @@ int main()
     int selection = 0;
     ////////// END DECLARATION
 
+    int statsArray[9];
+
+    for (int i = 0; i < 9; i++)
+    {
+        statsArray[i] = 0;
+    }
+
     do 
     {
         // Selects menu option
@@ -75,7 +83,7 @@ int main()
         if (selection == 1)
         {
             ////////// DECLARATION
-            // Selects opponents to verse
+            // Selects number of opponents to verse
             int opponents = selectOpponents();
             std::map <Card, int> availableCards;
             ////////// END DECLARATION
@@ -162,48 +170,57 @@ int main()
                 {
                     std::cout << "Hand strength: STRAIGHT FLUSH" << std::endl;
                     setStats(possibleWinner, indexCounter, 200, straightFlushPtr[1], 0, 0, 0, 0);
+                    statsArray[0] += 1;
                 }
                 else if (quadsPtr[0] == 1)
                 {
                     std::cout << "Hand strength: QUADS" << std::endl;
                     setStats(possibleWinner, indexCounter, 190, quadsPtr[1], quadsPtr[2], 0, 0, 0);
+                    statsArray[1] += 1;
                 }
                 else if (fullHousePtr[0] == 1)
                 {
                     std::cout << "Hand strength: FULL HOUSE" << std::endl;
                     setStats(possibleWinner, indexCounter, 180, fullHousePtr[1], fullHousePtr[2], 0, 0, 0);
+                    statsArray[2] += 1;
                 }
                 else if (flushPtr[0] == 1)
                 {
                     std::cout << "Hand strength: FLUSH" << std::endl;
                     setStats(possibleWinner, indexCounter, 170, flushPtr[1], flushPtr[2], flushPtr[3],
                             flushPtr[4], flushPtr[5]);
+                    statsArray[3] += 1;
                 }
                 else if (straightPtr[0] == 1)
                 {
                     std::cout << "Hand strength: STRAIGHT" << std::endl;
                     setStats(possibleWinner, indexCounter, 160, straightPtr[1], 0, 0, 0, 0);
+                    statsArray[4] += 1;
                 }
                 else if (tripsPtr[0] == 1)
                 {
                     std::cout << "Hand strength: TRIPS" << std::endl;
                     setStats(possibleWinner, indexCounter, 150, tripsPtr[1], tripsPtr[2], tripsPtr[3], 0, 0);
+                    statsArray[5] += 1;
                 }
                 else if (twoPairPtr[0] == 1)
                 {
                     std::cout << "Hand strength: TWO PAIR" << std::endl;
                     setStats(possibleWinner, indexCounter, 140, twoPairPtr[1], twoPairPtr[2], twoPairPtr[3], 0, 0);
+                    statsArray[6] += 1;
                 }
                 else if (pairPtr[0] == 1)
                 {
                     std::cout << "Hand strength: PAIR" << std::endl;
                     setStats(possibleWinner, indexCounter, 130, pairPtr[1], pairPtr[2], pairPtr[3], pairPtr[4], 0);
+                    statsArray[7] += 1;
                 }
                 else
                 {
                     std::cout << "Hand strength: HIGH CARD" << std::endl;
                     setStats(possibleWinner, indexCounter, highCardPtr[0], highCardPtr[0], highCardPtr[1],
                             highCardPtr[2], highCardPtr[3], highCardPtr[4]);
+                    statsArray[8] += 1;
                 }
 
                 #pragma region Memory Deallocation
@@ -405,10 +422,43 @@ int main()
 
             #pragma endregion
         }
+        else if (selection == 2)
+        {
+            ////////// DECLARATION
+            double handsDealt = 0;
+            ////////// END DECLARATION
 
-    } while (selection == 1);
+            // Counts the total number of poker hands dealt
+            for (int i = 0; i < 9; i++)
+                handsDealt += statsArray[i];
+            
+            if (handsDealt > 0)
+            {
+                std::cout << std::fixed << std::showpoint << std::setprecision(2);
+                std::cout << "\n=====-------------------------------=====\n";
+                std::cout << " EXPERIMENTAL PROBABILITY OF POKER HANDS\n";
+                std::cout << "=====-------------------------------=====\n";
+                std::cout << "      Straight flush: " << std::setw(10) << (statsArray[0]/handsDealt)*100 << "%\n";
+                std::cout << "      Quads:          " << std::setw(10) << (statsArray[1]/handsDealt)*100 << "%\n";
+                std::cout << "      Full house:     " << std::setw(10) << (statsArray[2]/handsDealt)*100 << "%\n";
+                std::cout << "      Flush:          " << std::setw(10) << (statsArray[3]/handsDealt)*100 << "%\n";
+                std::cout << "      Straight:       " << std::setw(10) << (statsArray[4]/handsDealt)*100 << "%\n";
+                std::cout << "      Trips:          " << std::setw(10) << (statsArray[5]/handsDealt)*100<< "%\n";
+                std::cout << "      Two pair:       " << std::setw(10) << (statsArray[6]/handsDealt)*100 << "%\n";
+                std::cout << "      Pair:           " << std::setw(10) << (statsArray[7]/handsDealt)*100 << "%\n";
+                std::cout << "      High card:      " << std::setw(10) << (statsArray[8]/handsDealt)*100 << "%\n";
+                std::cout << "=========================================\n";
+                std::cout << "Total number of runs: " << (int)handsDealt << std::endl;
+            }
+            else
+                std::cout << "\n** NO HANDS HAVE BEEN DEALT **\n";
+        }
 
-    std::cout << "\n*** THANKS FOR PLAYING ***\n\n";
+    } while (selection != 3);
+
+    std::cout << "\n<<****************************>>\n";
+    std::cout << "   <** THANKS FOR PLAYING **>\n";
+    std::cout << "<<****************************>>\n\n";
     
     return 0;
 }
@@ -425,13 +475,14 @@ int printMenu()
     int selection = 0;
 
     std::cout << "\nMeNuMeNu%%%========%%%MeNuMeNu\n";
-    std::cout << "     1 - Deal cards!\n";
-    std::cout << "     2 - Quit\n";
+    std::cout << "     1 - Deal cards\n";
+    std::cout << "     2 - Statistics\n";
+    std::cout << "     3 - Quit\n";
     std::cout << "MeNuMeNu%%%========%%%MeNuMeNu\n" << ">>> ";;
     std::cin >> selection;
 
-    // Forces a choice of 1 or 2
-    while (selection != 1 && selection != 2)
+    // Forces a choice of 1, 2 or 3
+    while (selection != 1 && selection != 2 && selection != 3)
     {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
