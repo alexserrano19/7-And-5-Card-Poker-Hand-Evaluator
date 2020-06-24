@@ -66,14 +66,8 @@ int main()
     // Seeds time for random number generation
     srand(time(0));
     int selection = 0;
+    int statsArray[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     ////////// END DECLARATION
-
-    int statsArray[9];
-
-    for (int i = 0; i < 9; i++)
-    {
-        statsArray[i] = 0;
-    }
 
     do 
     {
@@ -101,7 +95,7 @@ int main()
             ////////// DECLARATION
             int communityCounter = 0, playerCardCounter = 0;
             Card card, preEvaluation[5], evaluation[7];
-            Card* playerCard = new Card[(opponents+1)*2];
+            Card* playerCard = new Card[(opponents+1)*2]();
             ////////// END DECLARATION
 
             // Creates distinct cards for all players and community cards
@@ -129,7 +123,7 @@ int main()
             ////////// DECLARATION
             int indexCounter = -1;
             int *highCardPtr, *pairPtr, *twoPairPtr, *tripsPtr, *straightPtr, *flushPtr, *fullHousePtr, *quadsPtr, *straightFlushPtr;
-            Player_Hand* possibleWinner = new Player_Hand[opponents+1];
+            Player_Hand* possibleWinner = new Player_Hand[opponents+1]();
             ////////// END DECLARATION
 
             playerCardCounter = 0;
@@ -666,7 +660,7 @@ int compareKicker(std::string choice, struct Player_Hand arr[], int sizeOfArray)
 // Returns the player numbers that tied
 int* multipleWinners(struct Player_Hand arr[], int sizeOfArray)
 {
-    int *status = new int[sizeOfArray];
+    int *status = new int[sizeOfArray]();
 
     for (int i = 0; i < sizeOfArray; i++)
         status[i] = arr[i].playerNumber;
@@ -693,7 +687,7 @@ which are mentioned specifically at the end of each function */
 
 int* highCard(struct Card arr[])
 {
-    int* status = new int[5];
+    int* status = new int[5]();
 
     changeCardValue(arr, 1, 14);
     sortCardNumber(arr, 7);
@@ -709,7 +703,7 @@ int* highCard(struct Card arr[])
 
 int* pair(struct Card arr[])
 {
-    int* status = new int[5];
+    int* status = new int[5]();
     Card hold[7];
     
     // Creates a hold array before manipulation, so original array is not changed
@@ -752,7 +746,7 @@ int* pair(struct Card arr[])
 
 int* twoPair(struct Card arr[])
 {
-    int* status = new int[4];
+    int* status = new int[4]();
     Card hold[7];
     
     // Creates a hold array before manipulation, so original array is not changed
@@ -803,7 +797,7 @@ int* twoPair(struct Card arr[])
 
 int* trips(struct Card arr[])
 {
-    int *status = new int[4];
+    int *status = new int[4]();
     Card hold[7];
 
     // Creates a hold array before manipulation, so original array is not changed
@@ -845,7 +839,7 @@ int* trips(struct Card arr[])
 
 int* straight(struct Card arr[])
 {
-    int *status = new int[2];
+    int *status = new int[2]();
     Card hold[7];
 
     // Creates a hold array before manipulation, so original array is not changed
@@ -920,7 +914,7 @@ int* straight(struct Card arr[])
 
 int* flush(struct Card arr[])
 {
-    int *status = new int[7];
+    int *status = new int[7]();
     Card hold[7];
 
     // Creates a hold array before manipulation, so original array is not changed
@@ -987,7 +981,7 @@ int* flush(struct Card arr[])
 
 int* fullHouse(struct Card arr[])
 {
-    int *status = new int[3];
+    int *status = new int[3]();
     Card hold[7];
 
     // Creates a hold array before manipulation, so original array is not changed
@@ -1042,7 +1036,7 @@ int* fullHouse(struct Card arr[])
 
 int* quads(struct Card arr[])
 {
-    int* status = new int[3];
+    int* status = new int[3]();
     Card hold[7];
 
     // Creates a hold array before manipulation, so original array is not changed
@@ -1082,7 +1076,7 @@ int* quads(struct Card arr[])
 
 int* straightflush(struct Card arr[])
 {
-    int* status = new int[2];
+    int* status = new int[2]();
     Card hold[7];
 
     // Creates a hold array before manipulation, so original array is not changed
