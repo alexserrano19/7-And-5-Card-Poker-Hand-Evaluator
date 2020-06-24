@@ -25,8 +25,8 @@ struct Player_Hand
     int kicker4;
 };
 
-int printMenu();
-int selectOpponents();
+int selectMenuOption();
+int selectOpponents(std::string question);
 void printPlayerHand(struct Card arr[], int indexCounter);
 void sortCardNumber(struct Card arr[], int sizeOfArray);
 void setStats(struct Player_Hand arr[], int index, int pointsEarned, int highCard, int k1, int k2, int k3, int k4);
@@ -67,20 +67,37 @@ int main()
     srand(time(0));
     int selection = 0;
     int statsArray[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    // Continuos looping variables
+    bool continuosLoop = false;
+    int loopingOpponents = 0;
+    int loopingCounter = 0;
+    int loopingRequirement = 0;
     ////////// END DECLARATION
 
     do 
     {
-        // Selects menu option
-        selection = printMenu();
-
+        // Selects menu option, if it is in continous loop it doesn't ask
+        if (!continuosLoop)
+            selection = selectMenuOption();
+        else
+        {
+            selection = 1;
+            loopingCounter++;
+        }
+        
         if (selection == 1)
         {
             ////////// DECLARATION
             // Selects number of opponents to verse
-            int opponents = selectOpponents();
+            int opponents = 0;
             std::map <Card, int> availableCards;
             ////////// END DECLARATION
+
+            // Selects opponents
+            if (!continuosLoop)
+                opponents = selectOpponents("How many opponents do you want to play with?");
+            else
+                opponents = loopingOpponents;
 
             // Generates hash map of 52 card deck
             for (int i = 0; i < 13; i++)
@@ -447,8 +464,29 @@ int main()
             else
                 std::cout << "\n** NO HANDS HAVE BEEN DEALT **\n";
         }
+        else if (selection == 3)
+        {
+            continuosLoop = true;
+            loopingOpponents = 0;
+            loopingCounter = 0;
+            std::cout << "\nHow many times will you like the program to loop?\n" << ">>> ";
+            std::cin >> loopingRequirement;
 
-    } while (selection != 3);
+            while (loopingRequirement < 1)
+            {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "\nVALUE MUST BE GREATER THAN 1!\n" << ">>> ";
+                std::cin >> loopingRequirement;
+            }
+
+            loopingOpponents = selectOpponents("How many opponents in each loop?");
+        }
+
+        if (loopingCounter == loopingRequirement)
+            continuosLoop = false;
+        
+    } while (selection != 4);
 
     std::cout << "\n<<****************************>>\n";
     std::cout << "   <** THANKS FOR PLAYING **>\n";
@@ -464,19 +502,20 @@ int main()
 
 
 // Returns the menu selection
-int printMenu()
+int selectMenuOption()
 {
     int selection = 0;
 
     std::cout << "\nMeNuMeNu%%%========%%%MeNuMeNu\n";
     std::cout << "     1 - Deal cards\n";
     std::cout << "     2 - Statistics\n";
-    std::cout << "     3 - Quit\n";
+    std::cout << "     3 - Continous looping\n";
+    std::cout << "     4 - Quit\n";
     std::cout << "MeNuMeNu%%%========%%%MeNuMeNu\n" << ">>> ";;
     std::cin >> selection;
 
     // Forces a choice of 1, 2 or 3
-    while (selection != 1 && selection != 2 && selection != 3)
+    while (selection != 1 && selection != 2 && selection != 3 && selection != 4)
     {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -489,28 +528,22 @@ int printMenu()
 
 
 // Returns the amount of opponents that will be versed
-int selectOpponents()
+int selectOpponents(std::string question)
 {
     int opponents = 0;
 
-    do
+    do 
     {
-        std::cout << "\nHow many opponents do you want to play with?\n" << ">>> ";
+        std::cout << "\n" << question << "\n" << ">>> ";
         std::cin >> opponents;
 
-        // Forces between 1 and 22 (inclusive) opponents
-        if (opponents > 22)
+        if (opponents > 22 || opponents < 1)
         {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "\nONLY A MAXIMUM OF 22 OPPONENTS ARE POSSIBLE!";
+            std::cout << "\nINVALID AMOUNT! MAX: 22, MIN: 1";
         }
-        else if (opponents < 1)
-        {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "\nMORE OPPONENTS ARE NEEDED!";
-        }
+
     } while (opponents > 22 || opponents < 1);
 
     return opponents;
