@@ -1,1 +1,1 @@
-# Non-Interactive-Poker-Game
+# 7-Card-Poker-Hand-Evaluator
