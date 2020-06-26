@@ -4,6 +4,7 @@
 #include <string>
 #include <limits>
 #include <iomanip>
+#include <chrono>
 
 // Terminal command to compile: g++ poker.cpp -std=c++0x
 // Terminal command to execute: ./a.out
@@ -67,11 +68,17 @@ int main()
     srand(time(0));
     int selection = 0;
     int statsArray[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    // Activates/deactivates output for higher efficiency
+    std::streambuf* orig_buf = std::cout.rdbuf();
     // Continuos looping variables
     bool continuousLoop = false;
     int loopingOpponents = 0;
     int loopingCounter = 0;
     int loopingRequirement = 0;
+    // Used for timer
+    std::chrono::high_resolution_clock::time_point timer, timer2;
+    unsigned long duration;
+    unsigned long tempDuration = 0;
     ////////// END DECLARATION
 
     do 
@@ -81,6 +88,21 @@ int main()
             selection = selectMenuOption();
         else
         {
+            if (loopingCounter == 0)
+            {
+                timer = std::chrono::high_resolution_clock::now();
+                std::clog << "\n\n\nLOADING...\n\n\n";
+                // Deactivates output until looping is over
+                std::cout.rdbuf(NULL);
+            }
+            timer2 = std::chrono::high_resolution_clock::now();
+            duration = std::chrono::duration_cast<std::chrono::seconds>( timer2 - timer ).count(); 
+            if (duration % 5 == 0 && duration > tempDuration)
+            {
+                tempDuration = duration;
+                std::clog << "LOADING...\n";
+                std::clog << "Time loading: " << duration << " seconds\n\n\n";
+            }
             selection = 1;
             loopingCounter++;
         }
@@ -490,7 +512,12 @@ int main()
         }
 
         if (loopingCounter == loopingRequirement)
+        {
             continuousLoop = false;
+            // Activates output
+            std::cout.rdbuf(orig_buf);
+        }
+            
         
     } while (selection != 4);
 
