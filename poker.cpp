@@ -187,7 +187,7 @@ int main()
                     playerCardCounter++;
                 }
 
-                if (indexCounter % 4 == 0 && indexCounter != 0)
+                if (indexCounter % 5 == 0 && indexCounter != 0)
                     printCards(preEvaluation, 0, "\n", 5, 0);
                 printCards(evaluation, indexCounter, "", 7, 5);
 
@@ -513,6 +513,8 @@ int main()
 
         if (loopingCounter == loopingRequirement)
         {
+            if (continuousLoop)
+                std::clog << "FINISHED LOADING!\n\n\n";
             continuousLoop = false;
             // Activates output
             std::cout.rdbuf(orig_buf);
