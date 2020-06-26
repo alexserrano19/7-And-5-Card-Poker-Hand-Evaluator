@@ -27,7 +27,7 @@ struct Player_Hand
 
 int selectMenuOption();
 int selectOpponents(std::string question);
-void printPlayerHand(struct Card arr[], int indexCounter);
+void printCards(struct Card arr[], int indexCounter, std::string endCharacter, int arraySize, int startPosition);
 void sortCardNumber(struct Card arr[], int sizeOfArray);
 void setStats(struct Player_Hand arr[], int index, int pointsEarned, int highCard, int k1, int k2, int k3, int k4);
 void sortBy(std::string choice, struct Player_Hand arr[], int sizeOfArray);
@@ -68,7 +68,7 @@ int main()
     int selection = 0;
     int statsArray[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     // Continuos looping variables
-    bool continuosLoop = false;
+    bool continuousLoop = false;
     int loopingOpponents = 0;
     int loopingCounter = 0;
     int loopingRequirement = 0;
@@ -77,7 +77,7 @@ int main()
     do 
     {
         // Selects menu option, if it is in continous loop it doesn't ask
-        if (!continuosLoop)
+        if (!continuousLoop)
             selection = selectMenuOption();
         else
         {
@@ -94,10 +94,7 @@ int main()
             ////////// END DECLARATION
 
             // Selects opponents
-            if (!continuosLoop)
-                opponents = selectOpponents("How many opponents do you want to play with?");
-            else
-                opponents = loopingOpponents;
+            opponents = (!continuousLoop) ? selectOpponents("How many opponents do you want to play with?") : loopingOpponents;
 
             // Generates hash map of 52 card deck
             for (int i = 0; i < 13; i++)
@@ -141,11 +138,16 @@ int main()
             int indexCounter = -1;
             int *highCardPtr, *pairPtr, *twoPairPtr, *tripsPtr, *straightPtr, *flushPtr, *fullHousePtr, *quadsPtr, *straightFlushPtr;
             Player_Hand* possibleWinner = new Player_Hand[opponents+1]();
+            std::string handStrength = "";
             ////////// END DECLARATION
 
             playerCardCounter = 0;
 
-            std::cout << "\nTHE FOLLOWING LIST SHOWS ALL PLAYER HANDS AND THEIR STRENGTH:\n";
+            std::cout << "\n=================================================================\n";
+            std::cout << "  THE FOLLOWING LIST SHOWS ALL PLAYER HANDS AND THEIR STRENGTH:";
+            std::cout << "\n=================================================================\n";
+
+            printCards(preEvaluation, 0, "\n", 5, 0);
 
             while (playerCardCounter < (opponents+1)*2)
             {
@@ -163,7 +165,9 @@ int main()
                     playerCardCounter++;
                 }
 
-                printPlayerHand(evaluation, indexCounter);
+                if (indexCounter % 4 == 0 && indexCounter != 0)
+                    printCards(preEvaluation, 0, "\n", 5, 0);
+                printCards(evaluation, indexCounter, "", 7, 5);
 
                 // The pointers contain the values that evaluate each hand strength
                 straightFlushPtr = straightflush(evaluation);
@@ -179,60 +183,62 @@ int main()
                 ///// The following finds the hand strength for each player /////
                 if (straightFlushPtr[0] == 1)
                 {
-                    std::cout << "Hand strength: STRAIGHT FLUSH" << std::endl;
+                    handStrength = "\nHand strength: STRAIGHT FLUSH\n";
                     setStats(possibleWinner, indexCounter, 200, straightFlushPtr[1], 0, 0, 0, 0);
                     statsArray[0] += 1;
                 }
                 else if (quadsPtr[0] == 1)
                 {
-                    std::cout << "Hand strength: QUADS" << std::endl;
+                    handStrength = "\nHand strength: QUADS\n";
                     setStats(possibleWinner, indexCounter, 190, quadsPtr[1], quadsPtr[2], 0, 0, 0);
                     statsArray[1] += 1;
                 }
                 else if (fullHousePtr[0] == 1)
                 {
-                    std::cout << "Hand strength: FULL HOUSE" << std::endl;
+                    handStrength = "\nHand strength: FULL HOUSE\n";
                     setStats(possibleWinner, indexCounter, 180, fullHousePtr[1], fullHousePtr[2], 0, 0, 0);
                     statsArray[2] += 1;
                 }
                 else if (flushPtr[0] == 1)
                 {
-                    std::cout << "Hand strength: FLUSH" << std::endl;
+                    handStrength = "\nHand strength: FLUSH\n";
                     setStats(possibleWinner, indexCounter, 170, flushPtr[1], flushPtr[2], flushPtr[3],
                             flushPtr[4], flushPtr[5]);
                     statsArray[3] += 1;
                 }
                 else if (straightPtr[0] == 1)
                 {
-                    std::cout << "Hand strength: STRAIGHT" << std::endl;
+                    handStrength = "\nHand strength: STRAIGHT\n";
                     setStats(possibleWinner, indexCounter, 160, straightPtr[1], 0, 0, 0, 0);
                     statsArray[4] += 1;
                 }
                 else if (tripsPtr[0] == 1)
                 {
-                    std::cout << "Hand strength: TRIPS" << std::endl;
+                    handStrength = "\nHand strength: TRIPS\n";
                     setStats(possibleWinner, indexCounter, 150, tripsPtr[1], tripsPtr[2], tripsPtr[3], 0, 0);
                     statsArray[5] += 1;
                 }
                 else if (twoPairPtr[0] == 1)
                 {
-                    std::cout << "Hand strength: TWO PAIR" << std::endl;
+                    handStrength = "\nHand strength: TWO PAIR\n";
                     setStats(possibleWinner, indexCounter, 140, twoPairPtr[1], twoPairPtr[2], twoPairPtr[3], 0, 0);
                     statsArray[6] += 1;
                 }
                 else if (pairPtr[0] == 1)
                 {
-                    std::cout << "Hand strength: PAIR" << std::endl;
+                    handStrength = "\nHand strength: PAIR\n";
                     setStats(possibleWinner, indexCounter, 130, pairPtr[1], pairPtr[2], pairPtr[3], pairPtr[4], 0);
                     statsArray[7] += 1;
                 }
                 else
                 {
-                    std::cout << "Hand strength: HIGH CARD" << std::endl;
+                    handStrength = "\nHand strength: HIGH CARD\n";
                     setStats(possibleWinner, indexCounter, highCardPtr[0], highCardPtr[0], highCardPtr[1],
                             highCardPtr[2], highCardPtr[3], highCardPtr[4]);
                     statsArray[8] += 1;
                 }
+
+                std::cout << handStrength;
 
                 #pragma region Memory Deallocation
 
@@ -419,7 +425,7 @@ int main()
                 std::cout << "\nITS A TIE BETWEEN PLAYERS";
                 for (int i = 0; i < numberOfPlayersTied-1; i++)
                     std::cout << " #" << wins[i] << ",";
-                std::cout << " and #" << wins[numberOfPlayersTied-1] << "!\n\n";
+                std::cout << " and #" << wins[numberOfPlayersTied-1] << "!\n\n\n";
 
                 delete [] wins;
                 wins = 0;
@@ -428,7 +434,7 @@ int main()
             {
                 std::cout << "\n    <******* THE WINNER IS *******>\n";
                 std::cout << "      -----    PLAYER #" << trueWinner << "    -----" << std::endl;
-                std::cout << "   <**** !! CONGRATULATIONS !! ****>\n\n";
+                std::cout << "   <**** !! CONGRATULATIONS !! ****>\n\n\n";
             }
 
             #pragma endregion
@@ -445,7 +451,7 @@ int main()
             
             if (handsDealt > 0)
             {
-                std::cout << std::fixed << std::showpoint << std::setprecision(2);
+                std::cout << std::fixed << std::showpoint << std::setprecision(5);
                 std::cout << "\n=====-------------------------------=====\n";
                 std::cout << " EXPERIMENTAL PROBABILITY OF POKER HANDS\n";
                 std::cout << "=====-------------------------------=====\n";
@@ -466,7 +472,7 @@ int main()
         }
         else if (selection == 3)
         {
-            continuosLoop = true;
+            continuousLoop = true;
             loopingOpponents = 0;
             loopingCounter = 0;
             std::cout << "\nHow many times will you like the program to loop?\n" << ">>> ";
@@ -476,7 +482,7 @@ int main()
             {
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cout << "\nVALUE MUST BE GREATER THAN 1!\n" << ">>> ";
+                std::cerr << "\nVALUE MUST BE GREATER THAN 1!\n" << ">>> ";
                 std::cin >> loopingRequirement;
             }
 
@@ -484,7 +490,7 @@ int main()
         }
 
         if (loopingCounter == loopingRequirement)
-            continuosLoop = false;
+            continuousLoop = false;
         
     } while (selection != 4);
 
@@ -519,7 +525,7 @@ int selectMenuOption()
     {
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        std::cout << "\nTRY AGAIN!\n" << ">>> ";
+        std::cerr << "\nTRY AGAIN!\n" << ">>> ";
         std::cin >> selection;
     }
 
@@ -541,7 +547,7 @@ int selectOpponents(std::string question)
         {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "\nINVALID AMOUNT! MAX: 22, MIN: 1";
+            std::cerr << "\nINVALID AMOUNT! MAX: 22, MIN: 1";
         }
 
     } while (opponents > 22 || opponents < 1);
@@ -551,20 +557,72 @@ int selectOpponents(std::string question)
 
 
 // Prints out player hand and community cards
-void printPlayerHand(struct Card arr[], int indexCounter)
+void printCards (struct Card arr[], int indexCounter, std::string endCharacter, int arraySize, int startPosition)
 {
-    if (indexCounter == 0)
-        std::cout << "\nPlayer #"<< indexCounter+1 << "(YOU)" << std::endl;
-    else
-        std::cout << "\nPlayer #"<< indexCounter+1 << std::endl;
+    std::string handInfo = "";
+    if (endCharacter != "\n")
+    {
+        if (indexCounter == 0)
+            handInfo += "\nPlayer #" + std::to_string(indexCounter+1) + "(YOU)\n";
+        else
+            handInfo += "\nPlayer #" + std::to_string(indexCounter+1) + "\n";
+    }
 
-    // Prints out community cards and player cards for each player
-    std::cout << "Community Cards: {";
-    for(int i = 0; i < 4; i++)
-        std::cout << "{" << arr[i].number << ", " << arr[i].suit << "}, ";
-    std::cout << "{" << arr[4].number << ", " << arr[4].suit << "}}";
-    std::cout << "\nPlayer Hand: {{" << arr[5].number << ", " << arr[5].suit << "}, ";
-    std::cout << "{" << arr[6].number << ", " << arr[6].suit << "}}\n";
+    if (endCharacter == "\n")
+        handInfo += "\n=-- COMMUNITY CARDS --=\n";
+    else
+        handInfo += "PLAYER HAND: ";  
+
+
+    for (int i = startPosition; i < arraySize; i++)
+    {
+        if (endCharacter == "\n")
+            handInfo += "  * ";
+        else
+            handInfo += "";
+
+        switch(arr[i].number)
+        {
+            case 1:
+                handInfo += "Ace";
+                break;
+            case 11:
+                handInfo += "Jack";
+                break;
+            case 12:
+                handInfo += "Queen";
+                break;
+            case 13:
+                handInfo += "King";
+                break;
+            default:
+                handInfo += std::to_string(arr[i].number);
+        }
+
+        handInfo += " of ";
+
+        switch(arr[i].suit)
+        {
+            case 1:
+                handInfo += "Spades";
+                break;
+            case 2:
+                handInfo += "Cloves";
+                break;
+            case 3:
+                handInfo += "Hearts";
+                break;
+            case 4:
+                handInfo +=  "Diamonds";
+                break;
+        }
+
+        if (endCharacter != "\n" && i != 6)
+            handInfo += ", ";
+
+        handInfo += endCharacter;
+    }
+    std::cout << handInfo;
 }
 
 
