@@ -27,8 +27,9 @@ struct Player_Hand
 };
 
 int selectMenuOption();
-int selectOpponents(std::string question);
+int selectPlayers(std::string question);
 void printCards(struct Card arr[], int indexCounter, bool printingCommunityCards, int arraySize, int startPosition);
+void dynamicallyGrowBorder(int arr[], int playersTied);
 void sortCardNumber(struct Card arr[], int sizeOfArray);
 void setStats(struct Player_Hand arr[], int index, int pointsEarned, int highCard, int k1, int k2, int k3, int k4);
 void sortBy(std::string choice, struct Player_Hand arr[], int sizeOfArray);
@@ -70,10 +71,11 @@ int main()
     unsigned long int statsArray[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     // Activates/deactivates 'cout' output for higher efficiency
     std::streambuf* orig_buf = std::cout.rdbuf();
-    // Continuos looping variables
-    bool continuousLoop = false;
-    int loopingPlayers = 0;
-    unsigned long int loopingCounter = 0;
+    // Continuous looping variables
+    bool continuousLoopOn = false;
+    int playersPerContinuousLoop = 0;
+    int outputGames = 0;
+    unsigned long int numberOfLoops = 0;
     unsigned long int loopingRequirement = 0;
     // Used for timer
     std::chrono::high_resolution_clock::time_point timer, timer2;
@@ -84,17 +86,19 @@ int main()
     do 
     {
         // Selects menu option, if it is in continous loop it doesn't ask
-        if (!continuousLoop)
+        if (!continuousLoopOn)
             selection = selectMenuOption();
         else
         {
-            if (loopingCounter == 0)
+            if (numberOfLoops == 0)
             {
                 timer = std::chrono::high_resolution_clock::now();
                 std::clog << "\n\n\nLOADING...\n\n\n";
                 // Deactivates output until looping is over
                 std::cout.rdbuf(NULL);
             }
+            if (loopingRequirement-numberOfLoops == outputGames)
+                std::cout.rdbuf(orig_buf);
             timer2 = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::seconds>( timer2 - timer ).count(); 
             if (duration % 5 == 0 && duration > tempDuration)
@@ -102,10 +106,10 @@ int main()
                 tempDuration = duration;
                 std::clog << "LOADING...\n";
                 std::clog << "Time loading: " << duration << " seconds\n";
-                std::clog << "Games played so far: " << loopingCounter << "\n\n\n";
+                std::clog << "Games completed so far: " << numberOfLoops << "\n\n\n";
             }
             selection = 1;
-            loopingCounter++;
+            numberOfLoops++;
         }
         
         if (selection == 1)
@@ -117,7 +121,7 @@ int main()
             ////////// END DECLARATION
 
             // Selects opponents
-            players = (!continuousLoop) ? selectOpponents("How many players will you like to deals cards to?") : loopingPlayers;
+            players = (!continuousLoopOn) ? selectPlayers("How many players will you like to deals cards to?") : playersPerContinuousLoop;
 
             // Generates hash map of 52 card deck
             for (int i = 0; i < 13; i++)
@@ -442,52 +446,15 @@ int main()
 
             if (numberOfPlayersTied > 0)
             {
-                // Outputs ties with dynamically growing border
                 std::cout << "\n    ===---------------------";
-                if ((wins[0] <= 9 && wins[1] >= 10) || (wins[0] >= 10 && wins[1] <= 9))
-                    std::cout << "-";
-                if (wins[0] >= 10 && wins[1] >= 10)
-                    std::cout << "--";
-                if (numberOfPlayersTied > 2)
-                {
-                    for (int i = 2; i < numberOfPlayersTied; i++)
-                    {
-                        bool bigSkip = false;
-
-                        if (wins[i] >= 10)
-                            bigSkip = true;
-
-                        if (!bigSkip)
-                            std::cout << "----";
-                        else
-                            std::cout << "-----";
-                    }
-                }
+                dynamicallyGrowBorder(wins, numberOfPlayersTied);
                 std::cout << "------------------===\n";
                 std::cout << "        ITS A TIE BETWEEN PLAYERS";
                 for (int i = 0; i < numberOfPlayersTied-1; i++)
                     std::cout << " #" << wins[i] << ",";
                 std::cout << " and #" << wins[numberOfPlayersTied-1] << "!\n";
                 std::cout << "    =====-------------------";
-                if ((wins[0] <= 9 && wins[1] >= 10) || (wins[0] >= 10 && wins[1] <= 9))
-                    std::cout << "-";
-                if (wins[0] >= 10 && wins[1] >= 10)
-                    std::cout << "--";
-                if (numberOfPlayersTied > 2)
-                {
-                    for (int i = 2; i < numberOfPlayersTied; i++)
-                    {
-                        bool bigSkip = false;
-
-                        if (wins[i] >= 10)
-                            bigSkip = true;
-
-                        if (!bigSkip)
-                            std::cout << "----";
-                        else
-                            std::cout << "-----";
-                    }
-                }
+                dynamicallyGrowBorder(wins, numberOfPlayersTied);
                 std::cout << "----------------=====\n\n";
 
                 delete [] wins;
@@ -496,7 +463,8 @@ int main()
             else
             {
                 std::cout << "\n    WINNER===WINNER===WINNER===WINNER===WINNER===WINNER===WINNER===WINNER\n";
-                std::cout << "    ||                      *****"  << " PLAYER #" << trueWinner <<   " *****                      ||\n";
+                std::cout << "    ||                      *****"  << " PLAYER #" 
+                                                        << trueWinner <<   " *****                      ||\n";
                 std::cout << "    WINNER===WINNER===WINNER===WINNER===WINNER===WINNER===WINNER===WINNER\n\n";
             }
 
@@ -535,10 +503,10 @@ int main()
         }
         else if (selection == 3)
         {
-            continuousLoop = true;
-            loopingPlayers = 0;
-            loopingCounter = 0;
-            std::cout << "\nHow many games will you like to play?\n" << ">>> ";
+            continuousLoopOn = true;
+            playersPerContinuousLoop = 0;
+            numberOfLoops = 0;
+            std::cout << "\nFor how many games will you like to speed deal cards?\n" << ">>> ";
             std::cin >> loopingRequirement;
 
             while (loopingRequirement < 1)
@@ -549,16 +517,29 @@ int main()
                 std::cin >> loopingRequirement;
             }
 
-            loopingPlayers = selectOpponents("How many players in each game?");
+            playersPerContinuousLoop = selectPlayers("How many players in each game?");
+
+            std::cout << "\nHow many games should have player hand output?\n";
+            std::cout << "** More output equates to slower processing times **\n" << ">>> ";
+            std::cin >> outputGames;
+
+            while (outputGames > loopingRequirement || outputGames < 0)
+            {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cerr << "\nINVALID AMOUNT! MAX: " << loopingRequirement << " MIN: 0\n" << ">>> ";
+                std::cin >> outputGames;
+            }
         }
 
-        if (loopingCounter == loopingRequirement)
+        if (numberOfLoops == loopingRequirement)
         {
-            if (continuousLoop)
+            if (continuousLoopOn && outputGames == 0)
                 std::clog << "FINISHED LOADING!\n\n\n";
-            continuousLoop = false;
+            continuousLoopOn = false;
             // Activates output
-            std::cout.rdbuf(orig_buf);
+            if (outputGames == 0)
+                std::cout.rdbuf(orig_buf);
         }
             
         
@@ -606,7 +587,7 @@ int selectMenuOption()
 
 
 // Returns the amount of opponents that will be versed
-int selectOpponents(std::string question)
+int selectPlayers(std::string question)
 {
     int players = 0;
 
@@ -688,6 +669,31 @@ void printCards (struct Card arr[], int indexCounter, bool printingCommunityCard
             handInfo += ", ";
     }
     std::cout << handInfo;
+}
+
+
+// Dynamically grows border when players tie
+void dynamicallyGrowBorder(int arr[], int playersTied)
+{
+    if ((arr[0] <= 9 && arr[1] >= 10) || (arr[0] >= 10 && arr[1] <= 9))
+        std::cout << "-";
+    if (arr[0] >= 10 && arr[1] >= 10)
+        std::cout << "--";
+    if (playersTied > 2)
+    {
+        for (int i = 2; i < playersTied; i++)
+        {
+            bool bigSkip = false;
+
+            if (arr[i] >= 10)
+                bigSkip = true;
+
+            if (!bigSkip)
+                std::cout << "----";
+            else
+                std::cout << "-----";
+        }
+    }
 }
 
 
