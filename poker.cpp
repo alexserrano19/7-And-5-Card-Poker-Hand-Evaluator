@@ -28,26 +28,26 @@ struct Player_Hand
 
 int selectMenuOption();
 int selectPlayers(std::string question);
-void printCards(struct Card arr[], int indexCounter, bool printingCommunityCards, int arraySize, int startPosition);
+void printCards(const struct Card arr[], int indexCounter, bool printingCommunityCards, int arraySize, int startPosition);
 void dynamicallyGrowBorder(int arr[], int playersTied);
 void sortCardNumber(struct Card arr[], int sizeOfArray);
 void setStats(struct Player_Hand arr[], int index, int pointsEarned, int highCard, int k1, int k2, int k3, int k4);
 void sortBy(std::string choice, struct Player_Hand arr[], int sizeOfArray);
-int counterFor(std::string choice, struct Player_Hand arr[], int sizeOfArray);
-int compareKicker(std::string choice, struct Player_Hand arr[], int sizeOfArray);
-int* multipleWinners(struct Player_Hand arr[], int sizeOfArray);
 void changeCardValue(struct Card arr[], int valueCompared, int newValue);
+int counterFor(std::string choice, const struct Player_Hand arr[], int sizeOfArray);
+int compareKicker(std::string choice, const struct Player_Hand arr[], int sizeOfArray);
+int* multipleWinners(const struct Player_Hand arr[], int sizeOfArray);
 
 // Card strength functions
-int* highCard(struct Card arr[]);
-int* pair(struct Card arr[]);
-int* twoPair(struct Card arr[]);
-int* trips(struct Card arr[]);
-int* straight(struct Card arr[]);
-int* flush(struct Card arr[]);
-int* fullHouse(struct Card arr[]);
-int* quads(struct Card arr[]);
-int* straightflush(struct Card arr[]);
+int* highCard(const struct Card originalArr[]);
+int* pair(const struct Card originalArr[]);
+int* twoPair(const struct Card originalArr[]);
+int* trips(const struct Card originalArr[]);
+int* straight(const struct Card originalArr[]);
+int* flush(const struct Card originalArr[]);
+int* fullHouse(const struct Card originalArr[]);
+int* quads(const struct Card originalArr[]);
+int* straightflush(const struct Card originalArr[]);
 
 // Operator overloading for hash map
 bool operator < (const Card& t1, const Card& t2)
@@ -90,11 +90,12 @@ int main()
             selection = selectMenuOption();
         else
         {
+            selection = 1;
             if (numberOfLoops == 0)
             {
                 timer = std::chrono::high_resolution_clock::now();
                 std::clog << "\n\n\nLOADING...\n\n\n";
-                // Deactivates output until looping is over
+                // Deactivates cout output until looping is over
                 std::cout.rdbuf(NULL);
             }
             if (loopingRequirement-numberOfLoops == outputGames)
@@ -108,7 +109,6 @@ int main()
                 std::clog << "Time loading: " << duration << " seconds\n";
                 std::clog << "Games completed so far: " << numberOfLoops << "\n\n\n";
             }
-            selection = 1;
             numberOfLoops++;
         }
         
@@ -163,7 +163,7 @@ int main()
 
             ////////// DECLARATION
             int indexCounter = -1;
-            int *highCardPtr, *pairPtr, *twoPairPtr, *tripsPtr, *straightPtr, *flushPtr, *fullHousePtr, *quadsPtr, *straightFlushPtr;
+            int* highCardPtr, *pairPtr, *twoPairPtr, *tripsPtr, *straightPtr, *flushPtr, *fullHousePtr, *quadsPtr, *straightFlushPtr;
             Player_Hand* possibleWinner = new Player_Hand[players]();
             std::string handStrength = "";
             ////////// END DECLARATION
@@ -301,7 +301,7 @@ int main()
             /*  The rest of this program determines the winner based on kickers and highcards.
             First the program is sorted by player points, and the players with the highest 
             points are compared to each other based on their highcard and then the kickers 
-            (if need be). Some only require the highcards to be compared or some of the kickers. */
+            (if need be). Some only require the points to be compared or some of the kickers. */
 
             // sortBy, Sorts player hands by whatever is written in the first parameter i.e. "points"
             sortBy("points", possibleWinner, players);
@@ -491,7 +491,7 @@ int main()
                 std::cout << "      Full house:     " << std::setw(10) << (statsArray[2]/handsDealt)*100 << "%\n";
                 std::cout << "      Flush:          " << std::setw(10) << (statsArray[3]/handsDealt)*100 << "%\n";
                 std::cout << "      Straight:       " << std::setw(10) << (statsArray[4]/handsDealt)*100 << "%\n";
-                std::cout << "      Trips:          " << std::setw(10) << (statsArray[5]/handsDealt)*100<< "%\n";
+                std::cout << "      Trips:          " << std::setw(10) << (statsArray[5]/handsDealt)*100 << "%\n";
                 std::cout << "      Two pair:       " << std::setw(10) << (statsArray[6]/handsDealt)*100 << "%\n";
                 std::cout << "      Pair:           " << std::setw(10) << (statsArray[7]/handsDealt)*100 << "%\n";
                 std::cout << "      High card:      " << std::setw(10) << (statsArray[8]/handsDealt)*100 << "%\n";
@@ -506,29 +506,32 @@ int main()
             continuousLoopOn = true;
             playersPerContinuousLoop = 0;
             numberOfLoops = 0;
-            std::cout << "\nFor how many games will you like to speed deal cards?\n" << ">>> ";
-            std::cin >> loopingRequirement;
 
-            while (loopingRequirement < 1)
+            do
             {
-                std::cin.clear();
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cerr << "\nVALUE MUST BE GREATER THAN 1!\n" << ">>> ";
+                std::cout << "\nFor how many games will you like to speed deal cards?\n" << ">>> ";
                 std::cin >> loopingRequirement;
-            }
+
+                if (loopingRequirement < 2)
+                {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    std::cerr << "\nVALUE MUST BE GREATER THAN 1!";
+                }
+
+            } while (loopingRequirement < 2);
 
             playersPerContinuousLoop = selectPlayers("How many players in each game?");
 
-            std::cout << "\nHow many games should have player hand output?\n";
-            std::cout << "** More output equates to slower processing times **\n" << ">>> ";
-            std::cin >> outputGames;
-
-            while (outputGames > loopingRequirement || outputGames < 0)
+            std::cout << "\nFor how many games will you like player hand output?\n" << ">>> ";
+            // Checks with value of outputGames as 0
+            // Normally entering string into int memeory returns a 0, this protects from that
+            while (!(std::cin >> outputGames) || outputGames > loopingRequirement || outputGames < 0)
             {
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cerr << "\nINVALID AMOUNT! MAX: " << loopingRequirement << " MIN: 0\n" << ">>> ";
-                std::cin >> outputGames;
+                std::cerr << "\nINVALID AMOUNT! MAX: " << loopingRequirement << " MIN: 0";
+                std::cout << "\nFor how many games will you like player hand output?\n" << ">>> ";
             }
         }
 
@@ -610,7 +613,7 @@ int selectPlayers(std::string question)
 
 
 // Prints out player hand and community cards
-void printCards (struct Card arr[], int indexCounter, bool printingCommunityCards, int arraySize, int startPosition)
+void printCards (const struct Card arr[], int indexCounter, bool printingCommunityCards, int arraySize, int startPosition)
 {
     std::string handInfo = "";
     if (!printingCommunityCards)
@@ -631,38 +634,21 @@ void printCards (struct Card arr[], int indexCounter, bool printingCommunityCard
         
         switch(arr[i].number)
         {
-            case 1:
-                handInfo += "Ace";
-                break;
-            case 11:
-                handInfo += "Jack";
-                break;
-            case 12:
-                handInfo += "Queen";
-                break;
-            case 13:
-                handInfo += "King";
-                break;
-            default:
-                handInfo += std::to_string(arr[i].number);
+            case 1: handInfo += "Ace"; break;
+            case 11: handInfo += "Jack"; break;
+            case 12: handInfo += "Queen"; break;
+            case 13: handInfo += "King"; break;
+            default: handInfo += std::to_string(arr[i].number);
         }
 
         handInfo += " of ";
 
         switch(arr[i].suit)
         {
-            case 1:
-                handInfo += "Spades";
-                break;
-            case 2:
-                handInfo += "Cloves";
-                break;
-            case 3:
-                handInfo += "Hearts";
-                break;
-            case 4:
-                handInfo +=  "Diamonds";
-                break;
+            case 1: handInfo += "Spades"; break;
+            case 2: handInfo += "Cloves"; break;
+            case 3: handInfo += "Hearts"; break;
+            case 4: handInfo +=  "Diamonds"; break;
         }
 
         if (!printingCommunityCards && i != 6)
@@ -683,12 +669,12 @@ void dynamicallyGrowBorder(int arr[], int playersTied)
     {
         for (int i = 2; i < playersTied; i++)
         {
-            bool bigSkip = false;
+            bool bigNumber = false;
 
             if (arr[i] >= 10)
-                bigSkip = true;
+                bigNumber= true;
 
-            if (!bigSkip)
+            if (!bigNumber)
                 std::cout << "----";
             else
                 std::cout << "-----";
@@ -706,10 +692,10 @@ void sortCardNumber(struct Card arr[], int sizeOfArray)
         {
             if (arr[j].number < arr[j+1].number)
             {
-                Card temp;
-                temp = arr[j];
+                Card hold;
+                hold = arr[j];
                 arr[j] = arr[j+1];
-                arr[j+1] = temp;
+                arr[j+1] = hold;
             }
         }
     }
@@ -753,8 +739,17 @@ void sortBy(std::string choice, struct Player_Hand arr[], int sizeOfArray)
 }
 
 
+// Change value of card to new value, i.e. changing ace value from 1 to 14
+void changeCardValue(struct Card arr[], int valueCompared, int newValue)
+{
+    for (int i = 0; i < 7; i++)
+        if (arr[i].number == valueCompared)
+            arr[i].number = newValue;
+}
+
+
 // Returns the amount of players that have the same value of the "choice" parameter
-int counterFor(std::string choice, struct Player_Hand arr[], int sizeOfArray)
+int counterFor(std::string choice, const struct Player_Hand arr[], int sizeOfArray)
 {
     int newCounter = 1;
     for (int i = 0; i < sizeOfArray-1; i++)
@@ -777,7 +772,7 @@ int counterFor(std::string choice, struct Player_Hand arr[], int sizeOfArray)
 
 
 // Compares kickers and returns the player number who holds the larger value
-int compareKicker(std::string choice, struct Player_Hand arr[], int sizeOfArray)
+int compareKicker(std::string choice, const struct Player_Hand arr[], int sizeOfArray)
 {
     int trueWinner = 0;
     for (int i = 0; i < sizeOfArray-1; i++)
@@ -820,23 +815,14 @@ int compareKicker(std::string choice, struct Player_Hand arr[], int sizeOfArray)
 
 
 // Returns the player numbers that tied
-int* multipleWinners(struct Player_Hand arr[], int sizeOfArray)
+int* multipleWinners(const struct Player_Hand arr[], int sizeOfArray)
 {
-    int *status = new int[sizeOfArray]();
+    int* winners = new int[sizeOfArray]();
 
     for (int i = 0; i < sizeOfArray; i++)
-        status[i] = arr[i].playerNumber;
+        winners[i] = arr[i].playerNumber;
 
-    return status;
-}
-
-
-// Change value of card to new value, i.e. changing ace value from 1 to 14
-void changeCardValue(struct Card arr[], int valueCompared, int newValue)
-{
-    for (int i = 0; i < 7; i++)
-        if (arr[i].number == valueCompared)
-            arr[i].number = newValue;
+    return winners;
 }
 
 
@@ -847,30 +833,35 @@ which are mentioned specifically at the end of each function */
 /* Remember: Aces can act as the number 1 and 14 */
  
 
-int* highCard(struct Card arr[])
+int* highCard(const struct Card originalArr[])
 {
-    int* status = new int[5]();
+    int* handScore = new int[5]();
+    Card arr[7];
+    
+    // Copies to 'arr' array, so 'originalArr' doesn't change
+    for (int i = 0; i < 7; i++)
+        arr[i] = originalArr[i];
 
     changeCardValue(arr, 1, 14);
     sortCardNumber(arr, 7);
 
-    // Copies 5 highest cards into status array
+    // Copies 5 highest cards into handScore array
     for (int i = 0; i < 5; i++)
-        status[i] = arr[i].number;
+        handScore[i] = arr[i].number;
 
-    // status[0-4] = high card and kickers
-    return status;
+    // handScore[0-4] = high card and kickers
+    return handScore;
 }
 
 
-int* pair(struct Card arr[])
+int* pair(const struct Card originalArr[])
 {
-    int* status = new int[5]();
-    Card hold[7];
+    int* handScore = new int[5]();
+    Card arr[7];
     
-    // Creates a hold array before manipulation, so original array is not changed
+    // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
+        arr[i] = originalArr[i];
 
     changeCardValue(arr, 1, 14);
     sortCardNumber(arr, 7);
@@ -880,40 +871,36 @@ int* pair(struct Card arr[])
     {
         if (arr[i].number == arr[i+1].number)
         {
-            status[0] = 1;
-            status[1] = arr[i].number;
+            handScore[0] = 1;
+            handScore[1] = arr[i].number;
             break;
         }
     }
 
     // If a pair is present, this sets its 3 kickers
-    if (status[0] == 1)
+    if (handScore[0] == 1)
     {
-        changeCardValue(arr, status[1], -1);
+        changeCardValue(arr, handScore[1], -1);
         sortCardNumber(arr, 7);
-        status[2] = arr[0].number;
-        status[3] = arr[1].number;
-        status[4] = arr[2].number;
+        handScore[2] = arr[0].number;
+        handScore[3] = arr[1].number;
+        handScore[4] = arr[2].number;
     }
 
-    // Copies back hold array into original array after manipulation
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
-
-    /* status[0] = wether or not there is a single pair, status[1] = high card of single pair, status[2] = first kicker
-    status[3] = second kicker, status[4] = last kicker */
-    return status;
+    /* handScore[0] = wether or not there is a single pair, handScore[1] = high card of single pair, handScore[2] = first kicker
+    handScore[3] = second kicker, handScore[4] = last kicker */
+    return handScore;
 }
 
 
-int* twoPair(struct Card arr[])
+int* twoPair(const struct Card originalArr[])
 {
-    int* status = new int[4]();
-    Card hold[7];
+    int* handScore = new int[4]();
+    Card arr[7];
     
-    // Creates a hold array before manipulation, so original array is not changed
+    // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
+        arr[i] = originalArr[i];
 
     changeCardValue(arr, 1, 14);
     sortCardNumber(arr, 7);
@@ -926,45 +913,41 @@ int* twoPair(struct Card arr[])
         {
             if (checkSecondPair)
             {
-                status[0] = 1;
-                status[2] = arr[i].number;
+                handScore[0] = 1;
+                handScore[2] = arr[i].number;
                 break;
             }
             else
             {
-                status[1] = arr[i].number;
+                handScore[1] = arr[i].number;
                 checkSecondPair = true;
             }
         }
     }
 
     // Sets kicker if two pairs are present
-    if (status[0] == 1)
+    if (handScore[0] == 1)
     {
-        changeCardValue(arr, status[1], -1);
-        changeCardValue(arr, status[2], -1);
+        changeCardValue(arr, handScore[1], -1);
+        changeCardValue(arr, handScore[2], -1);
         sortCardNumber(arr, 7);
-        status[3] = arr[0].number;
+        handScore[3] = arr[0].number;
     }
 
-    // Copies back hold array into original array after manipulation
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
-
-    /* status[0] = wether or not there is a two pair, status[1] = value of highest pair, 
-    status[2] = value of second highest pair, status[3] = kicker */
-    return status;
+    /* handScore[0] = wether or not there is a two pair, handScore[1] = value of highest pair, 
+    handScore[2] = value of second highest pair, handScore[3] = kicker */
+    return handScore;
 }
 
 
-int* trips(struct Card arr[])
+int* trips(const struct Card originalArr[])
 {
-    int *status = new int[4]();
-    Card hold[7];
+    int* handScore = new int[4]();
+    Card arr[7];
 
-    // Creates a hold array before manipulation, so original array is not changed
+    // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
+        arr[i] = originalArr[i];
 
     changeCardValue(arr, 1, 14);
     sortCardNumber(arr, 7);
@@ -974,39 +957,35 @@ int* trips(struct Card arr[])
     {
         if (arr[i].number == arr[i+1].number && arr[i].number == arr[i+2].number)
         {
-            status[0] = 1;
-            status[1] = arr[i].number;
+            handScore[0] = 1;
+            handScore[1] = arr[i].number;
             break;
         }
     }
 
     // Sets two kickers if trips are present
-    if (status[0] == 1)
+    if (handScore[0] == 1)
     {
-        changeCardValue(arr, status[1], -1);
+        changeCardValue(arr, handScore[1], -1);
         sortCardNumber(arr, 7);
-        status[2] = arr[0].number;
-        status[3] = arr[1].number;
+        handScore[2] = arr[0].number;
+        handScore[3] = arr[1].number;
     }
 
-    // Copies back hold array into original array after manipulation
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
-
-    /* status[0] = wether or not there are trips, status[1] = trips high card, 
-    status[2] = first kicker, status[3] = second kicker */
-    return status;
+    /* handScore[0] = wether or not there are trips, handScore[1] = trips high card, 
+    handScore[2] = first kicker, handScore[3] = second kicker */
+    return handScore;
 }
 
 
-int* straight(struct Card arr[])
+int* straight(const struct Card originalArr[])
 {
-    int *status = new int[2]();
-    Card hold[7];
+    int* handScore = new int[2]();
+    Card arr[7];
 
-    // Creates a hold array before manipulation, so original array is not changed
+    // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
+        arr[i] = originalArr[i];
 
     sortCardNumber(arr, 7);
 
@@ -1016,8 +995,8 @@ int* straight(struct Card arr[])
     {
         if (arr[i].number == arr[i+1].number)
         {
-            Card temp = {-1, -1};
-            arr[i] = temp;
+            Card newCard = {-1, -1};
+            arr[i] = newCard;
             sortCardNumber(arr, 7);
             counter++;
             i = 0;
@@ -1040,8 +1019,8 @@ int* straight(struct Card arr[])
             if (arr[i].number == arr[i+1].number+1 && arr[i+1].number == arr[i+2].number+1 &&
                 arr[i+2].number == arr[i+3].number+1 && arr[i+3].number == arr[i+4].number+1)
             {
-                status[0] = 1;
-                status[1] = arr[i].number;
+                handScore[0] = 1;
+                handScore[1] = arr[i].number;
                 break;
             }
         }
@@ -1065,23 +1044,19 @@ int* straight(struct Card arr[])
 
     } while (ace);
 
-    // Copies back hold array into original array after manipulation
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
-
-    // status[0] = wether or not there is a straight, status[1] = high card of straight
-    return status;
+    // handScore[0] = wether or not there is a straight, handScore[1] = high card of straight
+    return handScore;
 }
 
 
-int* flush(struct Card arr[])
+int* flush(const struct Card originalArr[])
 {
-    int *status = new int[7]();
-    Card hold[7];
+    int* handScore = new int[7]();
+    Card arr[7];
 
-    // Creates a hold array before manipulation, so original array is not changed
+    // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
+        arr[i] = originalArr[i];
 
     int counter1 = 0, counter2 = 0, counter3 = 0, counter4 = 0;
     // Finds how many of each suit there are
@@ -1099,7 +1074,7 @@ int* flush(struct Card arr[])
 
     // Exits function if no flush is present
     if (counter1 < 5 && counter2 < 5 && counter3 < 5 && counter4 < 5)
-        return status;
+        return handScore;
 
     changeCardValue(arr, 1, 14);
     sortCardNumber(arr, 7);
@@ -1112,9 +1087,9 @@ int* flush(struct Card arr[])
             (counter3 >= 5 && i == 3) || 
             (counter4 >= 5 && i == 4))
         {
-            status[0] = 1;
+            handScore[0] = 1;
             // Sets the suit of the flush
-            status[6] = i;
+            handScore[6] = i;
             int indexCounter = 0;
             // Sets the high card and kickers
             for (int j = 0; j < 7; j++)
@@ -1124,31 +1099,27 @@ int* flush(struct Card arr[])
                     indexCounter++;
                     if (indexCounter > 5)
                         break;
-                    status[indexCounter] = arr[j].number;
+                    handScore[indexCounter] = arr[j].number;
                 }
             }
             break;
         }
     }
 
-    // Hold array copies old values back after collecting information about the array for the function
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
-
-    /* status[0] = wether or not there is a flush, status[1] = high card of flush, 
-    status[2-5] = kickers, status[6] = suit of flush */
-    return status;
+    /* handScore[0] = wether or not there is a flush, handScore[1] = high card of flush, 
+    handScore[2-5] = kickers, handScore[6] = suit of flush */
+    return handScore;
 }
 
 
-int* fullHouse(struct Card arr[])
+int* fullHouse(const struct Card originalArr[])
 {
-    int *status = new int[3]();
-    Card hold[7];
+    int* handScore = new int[3]();
+    Card arr[7];
 
-    // Creates a hold array before manipulation, so original array is not changed
+    // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
+        arr[i] = originalArr[i];
 
     changeCardValue(arr, 1, 14);
     sortCardNumber(arr, 7);
@@ -1159,7 +1130,7 @@ int* fullHouse(struct Card arr[])
     {
         if (arr[i].number == arr[i+1].number && arr[i].number == arr[i+2].number)
         {
-            status[1] = arr[i].number;
+            handScore[1] = arr[i].number;
             tripsPresent = true;
             break;
         }
@@ -1168,7 +1139,7 @@ int* fullHouse(struct Card arr[])
     if (tripsPresent)
     {
         // Removes trips so trips arent confused as pairs
-        changeCardValue(arr, status[1], -1);
+        changeCardValue(arr, handScore[1], -1);
         sortCardNumber(arr, 7);
         
         // Checks for a pair
@@ -1176,7 +1147,7 @@ int* fullHouse(struct Card arr[])
         {
             if (arr[i].number == arr[i+1].number)
             {
-                status[2] = arr[i].number;
+                handScore[2] = arr[i].number;
                 pairPresent = true;
                 break;
             }
@@ -1184,26 +1155,22 @@ int* fullHouse(struct Card arr[])
     }
 
     if (pairPresent && tripsPresent)
-        status[0] = 1;
+        handScore[0] = 1;
 
-    // Copies back hold array into original array after manipulation
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
-
-    /* status[0] = wether or not there is a full house, status[1] = high card of trips,
-    status[2] = high card of pair */
-    return status;
+    /* handScore[0] = wether or not there is a full house, handScore[1] = high card of trips,
+    handScore[2] = high card of pair */
+    return handScore;
 }
 
 
-int* quads(struct Card arr[])
+int* quads(const struct Card originalArr[])
 {
-    int* status = new int[3]();
-    Card hold[7];
+    int* handScore = new int[3]();
+    Card arr[7];
 
-    // Creates a hold array before manipulation, so original array is not changed
+    // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
+        arr[i] = originalArr[i];
 
     changeCardValue(arr, 1, 14);
     sortCardNumber(arr, 7);
@@ -1214,36 +1181,32 @@ int* quads(struct Card arr[])
         if (arr[i].number == arr[i+1].number && arr[i].number == arr[i+2].number &&
             arr[i].number == arr[i+3].number)
         {
-            status[0] = 1;
-            status[1] = arr[i].number;
+            handScore[0] = 1;
+            handScore[1] = arr[i].number;
         }
     }
 
     // If quads are present, the kicker is added
-    if (status[0] == 1)
+    if (handScore[0] == 1)
     {
-        changeCardValue(arr, status[1], -1);
+        changeCardValue(arr, handScore[1], -1);
         sortCardNumber(arr, 7);
-        status[2] = arr[0].number;
+        handScore[2] = arr[0].number;
     }
 
-    // Copies back hold array into original array after manipulation
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
-
-    // status[0] = wether or not there are quads, status[1] = high card of quads, status[2] = kicker
-    return status;
+    // handScore[0] = wether or not there are quads, handScore[1] = high card of quads, handScore[2] = kicker
+    return handScore;
 }
 
 
-int* straightflush(struct Card arr[])
+int* straightflush(const struct Card originalArr[])
 {
-    int* status = new int[2]();
-    Card hold[7];
+    int* handScore = new int[2]();
+    Card arr[7];
 
-    // Creates a hold array before manipulation, so original array is not changed
+    // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
-        hold[i] = arr[i];
+        arr[i] = originalArr[i];
 
     int* flushPtr = flush(arr);
     bool flushPresent = false;
@@ -1256,8 +1219,8 @@ int* straightflush(struct Card arr[])
         {
             if (flushPtr[6] != arr[i].suit)
             {
-                Card temp = {-1, -1};
-                arr[i] = temp;
+                Card newCard = {-1, -1};
+                arr[i] = newCard;
             }
         }
     }
@@ -1273,7 +1236,7 @@ int* straightflush(struct Card arr[])
 
         if (straightPtr[0] == 1)
         {
-            status[1] = straightPtr[1];
+            handScore[1] = straightPtr[1];
             straightPresent = true;
         }
         
@@ -1282,12 +1245,8 @@ int* straightflush(struct Card arr[])
     }
 
     if (straightPresent && flushPresent)
-        status[0] = 1;
-    
-    // Copies back hold array into original array after manipulation
-    for (int i = 0; i < 7; i++)
-        arr[i] = hold[i];
+        handScore[0] = 1;
 
-    // status[0] = wether or not there is a straightflush, status[1] = high card of straightflush
-    return status;
+    // handScore[0] = wether or not there is a straightflush, handScore[1] = high card of straightflush
+    return handScore;
 }
