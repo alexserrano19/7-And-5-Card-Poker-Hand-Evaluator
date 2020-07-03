@@ -7,9 +7,9 @@
 #include <array>
 
 /* 
-Terminal command to compile: 
+Terminal command to compile on Mac: 
 g++ poker.cpp -std=c++0x
-Terminal command to execute: 
+Terminal command to execute on Mac: 
 ./a.out 
 */
 
@@ -30,9 +30,13 @@ struct Player_Hand
     int kicker4;
 };
 
-char selectMenuOption();
-int selectPlayers(std::string question);
-void printCards(const struct Card arr[], int playerIndex, bool printingCommunityCards, int startPosition, int arraySize);
+char firstMenuOption();
+char selectMenuOption(bool fiveCardGame);
+void printByeMessage();
+int selectPlayers7game(std::string question);
+int selectPlayers5game(std::string question);
+void printCards(const struct Card arr[], int playerIndex, bool printingCommunityCards, 
+                int startPosition, int arraySize, bool fiveCardGame);
 void dynamicallyGrowBorder(int arr[], int playersTied);
 void sortCardNumber(struct Card arr[], int sizeOfArray);
 void setStats(struct Player_Hand arr[], int index, int pointsEarned, int highCard, int k1, int k2, int k3, int k4);
@@ -64,9 +68,9 @@ bool operator < (const Card& t1, const Card& t2)
 
 int main()
 {
-    std::cout << "\n========---------------------------------========\n";
-    std::cout << " ***** !! pOkEr PoKeR POKER PoKeR pOkEr !! ***** \n";
-    std::cout << "========---------------------------------========\n";
+    std::cout << "\n\nMoNeYmOnEy======--------======mOnEyMoNeY\n";
+    std::cout << "     **** Poker Hand Evaluator **** \n";
+    std::cout << "MoNeYmOnEy======--------======mOnEyMoNeY\n\n";
 
     ////////// DECLARATION
     // START - Uniform and random number generation declaration
@@ -92,13 +96,29 @@ int main()
     std::chrono::high_resolution_clock::time_point timer, timer2;
     int duration;
     int tempDuration = 0;
+    // Used for first menu option
+    char firstSelection;
+    // Boolean for 5/7 card poker 
+    bool fiveCardGame = false;
     ////////// END DECLARATION
+
+    firstSelection = firstMenuOption();
+
+    if (firstSelection == '5')
+        fiveCardGame = true;
+    else if (firstSelection == '7')
+        fiveCardGame = false;
+    else
+    {
+        printByeMessage();
+        return 0;
+    }
 
     do 
     {
         // Selects menu option, if it is in continous loop it doesn't ask
         if (!continuousLoopOn)
-            selection = selectMenuOption();
+            selection = selectMenuOption(fiveCardGame);
         else
         {
             selection = '1';
@@ -132,7 +152,10 @@ int main()
             ////////// END DECLARATION
 
             // Selects opponents
-            players = (!continuousLoopOn) ? selectPlayers("How many players will you like to deals cards to?") : playersPerContinuousLoop;
+            if (!fiveCardGame)
+                players = (!continuousLoopOn) ? selectPlayers7game("How many players will you like to deals cards to?") : playersPerContinuousLoop;
+            else
+                players = (!continuousLoopOn) ? selectPlayers5game("How many players will you like to deals cards to?") : playersPerContinuousLoop;
 
             // Generates hash map of 52 card deck
             for (int i = 0; i < 13; i++)
@@ -148,33 +171,52 @@ int main()
             int communityCounter = 0, playerCardCounter = 0;
             Card card, communityCards[5], sevenCardHand[7];
             Card* playerCards = new Card[players*2]();
+            Card* fiveCardHand = new Card[players*5]();
             ////////// END DECLARATION
 
-            // Creates distinct cards for all players and community cards
-            do
+            if (!fiveCardGame)
             {
-                card.number = cardNumber(engineNumberGenerator);
-                card.suit = cardSuit(engineNumberGenerator);    
-
-                if (availableCards[card] == 1)
+                // Creates distinct cards for all players and community cards
+                do
                 {
-                    if (communityCounter < 5)
+                    card.number = cardNumber(engineNumberGenerator);
+                    card.suit = cardSuit(engineNumberGenerator);    
+
+                    if (availableCards[card] == 1)
                     {
-                        communityCards[communityCounter] = card;
-                        communityCounter++;
+                        if (communityCounter < 5)
+                        {
+                            communityCards[communityCounter] = card;
+                            communityCounter++;
+                        }
+                        else
+                        {
+                            playerCards[playerCardCounter] = card;
+                            playerCardCounter++;
+                        }
+                        availableCards[card] = 0;
                     }
-                    else
+                } while (playerCardCounter < players*2);
+            }
+            else
+            {
+                // Creates distinct cards for all players and community cards
+                do
+                {
+                    card.number = cardNumber(engineNumberGenerator);
+                    card.suit = cardSuit(engineNumberGenerator);    
+
+                    if (availableCards[card] == 1)
                     {
-                        playerCards[playerCardCounter] = card;
+                        fiveCardHand[playerCardCounter] = card;
                         playerCardCounter++;
+                        availableCards[card] = 0;
                     }
-                    availableCards[card] = 0;
-                }
-            } while (playerCardCounter < players*2);
-        
+                } while (playerCardCounter < players*5);
+            }
 
             ////////// DECLARATION
-            int playerIndex = -1, playerCardArrayIndex = 0;
+            int playerIndex = -1, playerCardArrayIndex = 0, loopEvaluatorRequirement = 0;
             int* highCardPtr, *pairPtr, *twoPairPtr, *tripsPtr, *straightPtr, *flushPtr, *fullHousePtr, *quadsPtr, *straightFlushPtr;
             Player_Hand* possibleWinner = new Player_Hand[players]();
             std::string handStrength = "";
@@ -184,24 +226,44 @@ int main()
             std::cout << "  THE FOLLOWING LIST SHOWS ALL PLAYER HANDS AND THEIR STRENGTH:";
             std::cout << "\n=================================================================\n";
 
-            while (playerCardArrayIndex < players*2)
+            if (!fiveCardGame)
+                loopEvaluatorRequirement = players*2;
+            else
+                loopEvaluatorRequirement = players*5;
+            
+            while (playerCardArrayIndex < loopEvaluatorRequirement)
             {
                 // Sets the index for possibleWinner array
                 playerIndex++;
 
-                // Copies the communnity cards into sevenCardHand array
-                for (int i = 0; i < 5; i++)
-                    sevenCardHand[i] = communityCards[i];
-
-                // Copies 2 cards of the playerCards array into sevenCardHand array
-                for (int i = 5; i < 7; i++)
+                if (!fiveCardGame)
                 {
-                    sevenCardHand[i] = playerCards[playerCardArrayIndex];
-                    playerCardArrayIndex++;
+                    // Copies the communnity cards into sevenCardHand array
+                    for (int i = 0; i < 5; i++)
+                        sevenCardHand[i] = communityCards[i];
+
+                    // Copies 2 cards of the playerCards array into sevenCardHand array
+                    for (int i = 5; i < 7; i++)
+                    {
+                        sevenCardHand[i] = playerCards[playerCardArrayIndex];
+                        playerCardArrayIndex++;
+                    }
+
+                    printCards(sevenCardHand, playerIndex, false, 5, 7, false);
+                    printCards(sevenCardHand, playerIndex, true, 0, 5, false);
                 }
-                
-                printCards(sevenCardHand, playerIndex, false, 5, 7);
-                printCards(sevenCardHand, playerIndex, true, 0, 5);
+                else
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        sevenCardHand[i] = fiveCardHand[playerCardArrayIndex];
+                        playerCardArrayIndex++;
+                    }
+                    sevenCardHand[5] = {-5, -5};
+                    sevenCardHand[6] = {-10, -10};
+
+                    printCards(sevenCardHand, playerIndex, false, 0, 5, true);
+                }
 
                 // The pointers contain the values that evaluate each hand strength
                 straightFlushPtr = straightflush(sevenCardHand);
@@ -310,9 +372,11 @@ int main()
 
             delete [] playerCards;
             playerCards = 0;
+            delete [] fiveCardHand;
+            fiveCardHand = 0;
 
             ////////// DECLARATION
-            int* wins;
+            int* wins = 0;
             int samePointsCounter = 0, trueWinner = 0, numberOfPlayersTied = 0;
             ////////// END DECLARATION
 
@@ -488,49 +552,7 @@ int main()
 
             #pragma endregion
         }
-        else if (selection == '2' || selection == '3')
-        {
-            ////////// DECLARATION
-            long double handsDealt = 0;
-            ////////// END DECLARATION
-
-            if (selection == '2')
-            {
-                // Counts the total number of poker hands dealt
-                for (int i = 0; i < 10; i++)
-                    handsDealt += statsArray[i];
-                
-                if (handsDealt > 0)
-                {
-                    std::cout << std::fixed << std::showpoint << std::setprecision(6);
-                    std::cout << "\n=====-------------------------------=====\n";
-                    std::cout << " EXPERIMENTAL PROBABILITY OF POKER HANDS\n";
-                    std::cout << "=====-------------------------------=====\n";
-                    std::cout << "      Royal flush:    " << std::setw(10) << (statsArray[0]/handsDealt)*100 << "%\n";
-                    std::cout << "      Straight flush: " << std::setw(10) << (statsArray[1]/handsDealt)*100 << "%\n";
-                    std::cout << "      Quads:          " << std::setw(10) << (statsArray[2]/handsDealt)*100 << "%\n";
-                    std::cout << "      Full house:     " << std::setw(10) << (statsArray[3]/handsDealt)*100 << "%\n";
-                    std::cout << "      Flush:          " << std::setw(10) << (statsArray[4]/handsDealt)*100 << "%\n";
-                    std::cout << "      Straight:       " << std::setw(10) << (statsArray[5]/handsDealt)*100 << "%\n";
-                    std::cout << "      Trips:          " << std::setw(10) << (statsArray[6]/handsDealt)*100 << "%\n";
-                    std::cout << "      Two pair:       " << std::setw(10) << (statsArray[7]/handsDealt)*100 << "%\n";
-                    std::cout << "      Pair:           " << std::setw(10) << (statsArray[8]/handsDealt)*100 << "%\n";
-                    std::cout << "      High card:      " << std::setw(10) << (statsArray[9]/handsDealt)*100 << "%\n";
-                    std::cout << "=========================================\n";
-                    std::cout << "Total number of hands: " << (unsigned long int)handsDealt << std::endl;
-                }
-                else
-                    std::cout << "\n** NO HANDS HAVE BEEN DEALT **\n";
-            }
-            else
-            {
-                for (int i = 0; i < 10; i++)
-                    statsArray[i] = 0;
-                
-                std::cout << "\n** Statistics have been RESET **\n";
-            }
-        }
-        else if (selection == '4')
+        else if (selection == '2')
         {
             continuousLoopOn = true;
             playersPerContinuousLoop = 0;
@@ -550,8 +572,11 @@ int main()
 
             } while (loopingRequirement < 2);
 
-            playersPerContinuousLoop = selectPlayers("How many players in each game?");
-
+            if (!fiveCardGame)
+                playersPerContinuousLoop = selectPlayers7game("How many players in each game?");
+            else
+                playersPerContinuousLoop = selectPlayers5game("How many players in each game?");
+            
             std::cout << "\nFor how many games will you like player hand output?\n" << ">>> ";
             // Checks with value of outputGames as 0
             // Normally entering string into int memeory returns a 0, this protects from that
@@ -561,6 +586,48 @@ int main()
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 std::cerr << "\nINVALID AMOUNT! MAX: " << loopingRequirement << " MIN: 0";
                 std::cout << "\nFor how many games will you like player hand output?\n" << ">>> ";
+            }
+        }
+        else if (selection == '3' || selection == '4')
+        {
+            if (selection == '3')
+            {
+                ////////// DECLARATION
+                long double handsDealt = 0;
+                ////////// END DECLARATION
+
+                // Counts the total number of poker hands dealt
+                for (int i = 0; i < 10; i++)
+                    handsDealt += (long double)statsArray[i];
+                
+                if (handsDealt > 0)
+                {
+                    std::cout << std::fixed << std::showpoint << std::setprecision(6);
+                    std::cout << "\n=====-------------------------------=====\n";
+                    std::cout << " EXPERIMENTAL PROBABILITY OF POKER HANDS\n";
+                    std::cout << "=====-------------------------------=====\n";
+                    std::cout << "      Royal flush:    " << std::setw(10) << (statsArray[0]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      Straight flush: " << std::setw(10) << (statsArray[1]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      Quads:          " << std::setw(10) << (statsArray[2]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      Full house:     " << std::setw(10) << (statsArray[3]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      Flush:          " << std::setw(10) << (statsArray[4]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      Straight:       " << std::setw(10) << (statsArray[5]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      Trips:          " << std::setw(10) << (statsArray[6]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      Two pair:       " << std::setw(10) << (statsArray[7]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      Pair:           " << std::setw(10) << (statsArray[8]/handsDealt)*100.0 << "%\n";
+                    std::cout << "      High card:      " << std::setw(10) << (statsArray[9]/handsDealt)*100.0 << "%\n";
+                    std::cout << "=========================================\n";
+                    std::cout << "Total number of hands: " << (unsigned long int)handsDealt << std::endl;
+                }
+                else
+                    std::cout << "\n** NO HANDS HAVE BEEN DEALT **\n";
+            }
+            else
+            {
+                for (int i = 0; i < 10; i++)
+                    statsArray[i] = 0;
+                
+                std::cout << "\n** Statistics have been RESET **\n";
             }
         }
 
@@ -576,11 +643,7 @@ int main()
         
     } while (selection != 'Q');
 
-    std::cout << "\n  <<****************************>>\n";
-    std::cout << "<<ThAnKyOutHaNkYoUThAnKyOutHaNkYoU>>\n";
-    std::cout << "     <** THANKS FOR PLAYING **>\n";
-    std::cout << "<<ThAnKyOutHaNkYoUThAnKyOutHaNkYoU>>\n";
-    std::cout << "  <<****************************>>\n\n";
+    printByeMessage();
     
     return 0;
 }
@@ -591,16 +654,46 @@ int main()
 ////////////////////////////////////////////////////////////////////////////
 
 
+// Returns first menu option
+char firstMenuOption()
+{
+    char selection = 0;
+
+    std::cout << "\nMeNuMeNu%%%===========%%%MeNuMeNu\n";
+    std::cout << "    5 - Play 5 card evaluator\n";
+    std::cout << "    7 - Play 7 card evaluator\n";
+    std::cout << "    Q - Quit\n";
+    std::cout << "MeNuMeNu%%%===========%%%MeNuMeNu\n" << ">>> ";;
+    std::cin >> selection;
+
+    selection = toupper(selection);
+
+    // Forces a choice of 5,7 or Q
+    while (selection != '5' && selection != '7' && selection != 'Q' )
+    {
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cerr << "\nTRY AGAIN!\n" << ">>> ";
+        std::cin >> selection;
+        selection = toupper(selection);
+    }
+
+    return selection;
+}
+
 // Returns the menu selection
-char selectMenuOption()
+char selectMenuOption(bool fiveCardGame)
 {
     char selection = 0;
 
     std::cout << "\nMeNuMeNu%%%========%%%MeNuMeNu\n";
-    std::cout << "     1 - Deal cards\n";
-    std::cout << "     2 - Statistics\n";
-    std::cout << "     3 - Reset Statistics\n";
-    std::cout << "     4 - Speed dealing\n";
+    if (!fiveCardGame)
+        std::cout << "     1 - Deal SEVEN cards\n";
+    else
+        std::cout << "     1 - Deal FIVE cards\n";
+    std::cout << "     2 - Speed dealing\n";
+    std::cout << "     3 - Statistics\n";
+    std::cout << "     4 - Reset Statistics\n";
     std::cout << "     Q - Quit\n";
     std::cout << "MeNuMeNu%%%========%%%MeNuMeNu\n" << ">>> ";;
     std::cin >> selection;
@@ -621,8 +714,19 @@ char selectMenuOption()
 }
 
 
-// Returns the amount of opponents that will be versed
-int selectPlayers(std::string question)
+// Prints message upon exiting
+void printByeMessage()
+{
+    std::cout << "\n  <<****************************>>\n";
+    std::cout << "<<ThAnKyOutHaNkYoUThAnKyOutHaNkYoU>>\n";
+    std::cout << "     <** THANKS FOR PLAYING **>\n";
+    std::cout << "<<ThAnKyOutHaNkYoUThAnKyOutHaNkYoU>>\n";
+    std::cout << "  <<****************************>>\n\n";
+}
+
+
+// In seven player game, returns the amount of opponents that will be versed
+int selectPlayers7game(std::string question)
 {
     int players = 0;
 
@@ -644,14 +748,40 @@ int selectPlayers(std::string question)
 }
 
 
+// In five player game, returns the amount of opponents that will be versed
+int selectPlayers5game(std::string question)
+{
+    int players = 0;
+
+    do 
+    {
+        std::cout << "\n" << question << "\n" << ">>> ";
+        std::cin >> players;
+
+        if (players > 10 || players < 1)
+        {
+            std::cin.clear();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cerr << "\nINVALID AMOUNT! MAX: 10, MIN: 1";
+        }
+
+    } while (players > 10 || players < 1);
+
+    return players;
+}
+
+
 // Prints out player hand and community cards
-void printCards (const struct Card arr[], int playerIndex, bool printingCommunityCards, int startPosition, int arraySize)
+void printCards (const struct Card arr[], int playerIndex, bool printingCommunityCards, int startPosition, int arraySize, bool fiveCardGame)
 {
     std::string handInfo = "";
     if (!printingCommunityCards)
     {
         handInfo += "\n=-- #" + std::to_string(playerIndex+1) + " --=";
-        handInfo += "\nPLAYER HAND: ";   
+        if (!fiveCardGame)
+            handInfo += "\nPLAYER HAND: "; 
+        else
+            handInfo += "\nFIVE CARD HAND:"; 
     }
 
     if (printingCommunityCards)
@@ -661,7 +791,7 @@ void printCards (const struct Card arr[], int playerIndex, bool printingCommunit
     {
         if (i == startPosition && printingCommunityCards)
             handInfo += "  * ";
-        else if (printingCommunityCards)
+        else if (printingCommunityCards || fiveCardGame)
             handInfo += " * ";
         
         switch(arr[i].number)
@@ -683,7 +813,7 @@ void printCards (const struct Card arr[], int playerIndex, bool printingCommunit
             case 4: handInfo +=  "Diamonds"; break;
         }
 
-        if (!printingCommunityCards && i != 6)
+        if (!printingCommunityCards && i != 6 && !fiveCardGame)
             handInfo += ", ";
     }
     std::cout << handInfo;
@@ -1171,7 +1301,7 @@ int* fullHouse(const struct Card originalArr[])
     if (tripsPresent)
     {
         // Removes trips so trips arent confused as pairs
-        changeCardValue(arr, handScore[1], -1);
+        changeCardValue(arr, handScore[1], -100);
         sortCardNumber(arr, 7);
         
         // Checks for a pair
