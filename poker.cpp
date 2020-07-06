@@ -35,7 +35,7 @@ char selectMenuOption(bool fiveCardGame);
 void printByeMessage();
 int selectPlayers7game(std::string question);
 int selectPlayers5game(std::string question);
-void printCards(const struct Card arr[], int playerIndex, bool printingCommunityCards, 
+void printCards(const struct Card arr[], int possibleWinnerIndex, bool printingCommunityCards, 
                 int startPosition, int arraySize, bool fiveCardGame);
 void dynamicallyGrowBorder(int arr[], int playersTied);
 void sortCardNumber(struct Card arr[], int sizeOfArray);
@@ -83,17 +83,17 @@ int main()
     std::uniform_int_distribution<int> cardSuit(1, 4);
     // END - Uniform and random number generation declaration
     char selection = 0;
-    unsigned long int statsArray[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    unsigned long long int statsArray[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     // Activates/deactivates 'cout' output for higher efficiency
     std::streambuf* orig_buf = std::cout.rdbuf();
     // Continuous looping variables
     bool continuousLoopOn = false;
     int playersPerContinuousLoop = 0;
     int outputGames = 0;
-    unsigned long int numberOfLoops = 0;
-    unsigned long int loopingRequirement = 0;
+    unsigned long long int numberOfLoops = 0;
+    unsigned long long int loopingRequirement = 0;
     // Used for timer
-    std::chrono::high_resolution_clock::time_point timer, timer2;
+    std::chrono::high_resolution_clock::time_point startTimer, endTimer;
     int duration;
     int tempDuration = 0;
     // Used for first menu option
@@ -102,6 +102,7 @@ int main()
     bool fiveCardGame = false;
     ////////// END DECLARATION
 
+    // Choice between 5 or 7 card evaluator
     firstSelection = firstMenuOption();
 
     if (firstSelection == '5')
@@ -124,15 +125,15 @@ int main()
             selection = '1';
             if (numberOfLoops == 0)
             {
-                timer = std::chrono::high_resolution_clock::now();
+                startTimer = std::chrono::high_resolution_clock::now();
                 std::clog << "\n\n\nLOADING...\n\n\n";
                 // Deactivates cout output until looping is over
                 std::cout.rdbuf(NULL);
             }
             if (loopingRequirement-numberOfLoops == outputGames)
                 std::cout.rdbuf(orig_buf);
-            timer2 = std::chrono::high_resolution_clock::now();
-            duration = std::chrono::duration_cast<std::chrono::seconds>(timer2 - timer).count(); 
+            endTimer = std::chrono::high_resolution_clock::now();
+            duration = std::chrono::duration_cast<std::chrono::seconds>(endTimer - startTimer).count(); 
             if (duration % 5 == 0 && duration > tempDuration)
             {
                 tempDuration = duration;
@@ -157,7 +158,7 @@ int main()
             else
                 players = (!continuousLoopOn) ? selectPlayers5game("How many players will you like to deals cards to?") : playersPerContinuousLoop;
 
-            // Generates hash map of 52 card deck
+            // Generates 52 card deck
             for (int i = 0; i < 13; i++)
             {
                 for (int j = 0; j < 4; j++)
@@ -168,11 +169,16 @@ int main()
             }
             
             ////////// DECLARATION
-            int communityCounter = 0, playerCardCounter = 0;
+            int communityCounter = 0, playerCardCounter = 0, loopEvaluatorRequirement = 0;
             Card card, communityCards[5], sevenCardHand[7];
             Card* playerCards = new Card[players*2]();
             Card* fiveCardHand = new Card[players*5]();
             ////////// END DECLARATION
+
+            if (!fiveCardGame)
+                loopEvaluatorRequirement = players*2;
+            else
+                loopEvaluatorRequirement = players*5;
 
             if (!fiveCardGame)
             {
@@ -196,7 +202,7 @@ int main()
                         }
                         availableCards[card] = 0;
                     }
-                } while (playerCardCounter < players*2);
+                } while (playerCardCounter < loopEvaluatorRequirement);
             }
             else
             {
@@ -212,29 +218,23 @@ int main()
                         playerCardCounter++;
                         availableCards[card] = 0;
                     }
-                } while (playerCardCounter < players*5);
+                } while (playerCardCounter < loopEvaluatorRequirement);
             }
 
             ////////// DECLARATION
-            int playerIndex = -1, playerCardArrayIndex = 0, loopEvaluatorRequirement = 0;
+            int possibleWinnerIndex = -1, cardIndex = 0;
             int* highCardPtr, *pairPtr, *twoPairPtr, *tripsPtr, *straightPtr, *flushPtr, *fullHousePtr, *quadsPtr, *straightFlushPtr;
             Player_Hand* possibleWinner = new Player_Hand[players]();
-            std::string handStrength = "";
             ////////// END DECLARATION
 
             std::cout << "\n=================================================================\n";
             std::cout << "  THE FOLLOWING LIST SHOWS ALL PLAYER HANDS AND THEIR STRENGTH:";
             std::cout << "\n=================================================================\n";
-
-            if (!fiveCardGame)
-                loopEvaluatorRequirement = players*2;
-            else
-                loopEvaluatorRequirement = players*5;
             
-            while (playerCardArrayIndex < loopEvaluatorRequirement)
+            while (cardIndex < loopEvaluatorRequirement)
             {
                 // Sets the index for possibleWinner array
-                playerIndex++;
+                possibleWinnerIndex++;
 
                 if (!fiveCardGame)
                 {
@@ -245,24 +245,24 @@ int main()
                     // Copies 2 cards of the playerCards array into sevenCardHand array
                     for (int i = 5; i < 7; i++)
                     {
-                        sevenCardHand[i] = playerCards[playerCardArrayIndex];
-                        playerCardArrayIndex++;
+                        sevenCardHand[i] = playerCards[cardIndex];
+                        cardIndex++;
                     }
 
-                    printCards(sevenCardHand, playerIndex, false, 5, 7, false);
-                    printCards(sevenCardHand, playerIndex, true, 0, 5, false);
+                    printCards(sevenCardHand, possibleWinnerIndex, false, 5, 7, false);
+                    printCards(sevenCardHand, possibleWinnerIndex, true, 0, 5, false);
                 }
                 else
                 {
                     for (int i = 0; i < 5; i++)
                     {
-                        sevenCardHand[i] = fiveCardHand[playerCardArrayIndex];
-                        playerCardArrayIndex++;
+                        sevenCardHand[i] = fiveCardHand[cardIndex];
+                        cardIndex++;
                     }
                     sevenCardHand[5] = {-5, -5};
                     sevenCardHand[6] = {-10, -10};
 
-                    printCards(sevenCardHand, playerIndex, false, 0, 5, true);
+                    printCards(sevenCardHand, possibleWinnerIndex, false, 0, 5, true);
                 }
 
                 // The pointers contain the values that evaluate each hand strength
@@ -279,95 +279,68 @@ int main()
                 ///// The following finds the hand strength for each player /////
                 if (straightFlushPtr[0] == 1)
                 {
-                    setStats(possibleWinner, playerIndex, 200, straightFlushPtr[1], 0, 0, 0, 0);
+                    setStats(possibleWinner, possibleWinnerIndex, 200, straightFlushPtr[1], 0, 0, 0, 0);
                     if (straightFlushPtr[1] == 14)
                     {
-                        handStrength = "\nHand strength: ROYAL FLUSH\n";
+                        std::cout << "\nHand strength: ROYAL FLUSH\n";
                         statsArray[0] += 1;
                     }  
                     else
                     {
-                        handStrength = "\nHand strength: STRAIGHT FLUSH\n";
+                        std::cout << "\nHand strength: STRAIGHT FLUSH\n";
                         statsArray[1] += 1;
                     }
                 }
                 else if (quadsPtr[0] == 1)
                 {
-                    handStrength = "\nHand strength: QUADS\n";
-                    setStats(possibleWinner, playerIndex, 190, quadsPtr[1], quadsPtr[2], 0, 0, 0);
+                    std::cout << "\nHand strength: QUADS\n";
+                    setStats(possibleWinner, possibleWinnerIndex, 190, quadsPtr[1], quadsPtr[2], 0, 0, 0);
                     statsArray[2] += 1;
                 }
                 else if (fullHousePtr[0] == 1)
                 {
-                    handStrength = "\nHand strength: FULL HOUSE\n";
-                    setStats(possibleWinner, playerIndex, 180, fullHousePtr[1], fullHousePtr[2], 0, 0, 0);
+                    std::cout << "\nHand strength: FULL HOUSE\n";
+                    setStats(possibleWinner, possibleWinnerIndex, 180, fullHousePtr[1], fullHousePtr[2], 0, 0, 0);
                     statsArray[3] += 1;
                 }
                 else if (flushPtr[0] == 1)
                 {
-                    handStrength = "\nHand strength: FLUSH\n";
-                    setStats(possibleWinner, playerIndex, 170, flushPtr[1], flushPtr[2], flushPtr[3],
+                    std::cout << "\nHand strength: FLUSH\n";
+                    setStats(possibleWinner, possibleWinnerIndex, 170, flushPtr[1], flushPtr[2], flushPtr[3],
                             flushPtr[4], flushPtr[5]);
                     statsArray[4] += 1;
                 }
                 else if (straightPtr[0] == 1)
                 {
-                    handStrength = "\nHand strength: STRAIGHT\n";
-                    setStats(possibleWinner, playerIndex, 160, straightPtr[1], 0, 0, 0, 0);
+                    std::cout << "\nHand strength: STRAIGHT\n";
+                    setStats(possibleWinner, possibleWinnerIndex, 160, straightPtr[1], 0, 0, 0, 0);
                     statsArray[5] += 1;
                 }
                 else if (tripsPtr[0] == 1)
                 {
-                    handStrength = "\nHand strength: TRIPS\n";
-                    setStats(possibleWinner, playerIndex, 150, tripsPtr[1], tripsPtr[2], tripsPtr[3], 0, 0);
+                    std::cout << "\nHand strength: TRIPS\n";
+                    setStats(possibleWinner, possibleWinnerIndex, 150, tripsPtr[1], tripsPtr[2], tripsPtr[3], 0, 0);
                     statsArray[6] += 1;
                 }
                 else if (twoPairPtr[0] == 1)
                 {
-                    handStrength = "\nHand strength: TWO PAIR\n";
-                    setStats(possibleWinner, playerIndex, 140, twoPairPtr[1], twoPairPtr[2], twoPairPtr[3], 0, 0);
+                    std::cout << "\nHand strength: TWO PAIR\n";
+                    setStats(possibleWinner, possibleWinnerIndex, 140, twoPairPtr[1], twoPairPtr[2], twoPairPtr[3], 0, 0);
                     statsArray[7] += 1;
                 }
                 else if (pairPtr[0] == 1)
                 {
-                    handStrength = "\nHand strength: PAIR\n";
-                    setStats(possibleWinner, playerIndex, 130, pairPtr[1], pairPtr[2], pairPtr[3], pairPtr[4], 0);
+                    std::cout << "\nHand strength: PAIR\n";
+                    setStats(possibleWinner, possibleWinnerIndex, 130, pairPtr[1], pairPtr[2], pairPtr[3], pairPtr[4], 0);
                     statsArray[8] += 1;
                 }
                 else
                 {
-                    handStrength = "\nHand strength: HIGH CARD\n";
-                    setStats(possibleWinner, playerIndex, highCardPtr[0], highCardPtr[0], highCardPtr[1],
+                    std::cout << "\nHand strength: HIGH CARD\n";
+                    setStats(possibleWinner, possibleWinnerIndex, highCardPtr[0], highCardPtr[0], highCardPtr[1],
                             highCardPtr[2], highCardPtr[3], highCardPtr[4]);
                     statsArray[9] += 1;
                 }
-
-                std::cout << handStrength;
-
-                #pragma region Memory Deallocation
-
-                // Deallocates memory from the functions
-                // Sets pointers to null value
-                delete [] straightFlushPtr; 
-                straightFlushPtr = 0;
-                delete [] quadsPtr; 
-                quadsPtr = 0;
-                delete [] fullHousePtr; 
-                fullHousePtr = 0;
-                delete [] flushPtr; 
-                flushPtr = 0; 
-                delete [] straightPtr; 
-                straightPtr = 0;
-                delete [] tripsPtr;
-                tripsPtr = 0;
-                delete [] twoPairPtr;
-                twoPairPtr = 0;
-                delete [] pairPtr; 
-                pairPtr = 0;
-                delete [] highCardPtr; 
-                highCardPtr = 0;
-
-                #pragma endregion
             }
 
             delete [] playerCards;
@@ -578,8 +551,7 @@ int main()
                 playersPerContinuousLoop = selectPlayers5game("How many players in each game?");
             
             std::cout << "\nFor how many games will you like player hand output?\n" << ">>> ";
-            // Checks with value of outputGames as 0
-            // Normally entering string into int memeory returns a 0, this protects from that
+
             while (!(std::cin >> outputGames) || outputGames > loopingRequirement || outputGames < 0)
             {
                 std::cin.clear();
@@ -617,7 +589,7 @@ int main()
                     std::cout << "      Pair:           " << std::setw(10) << (statsArray[8]/handsDealt)*100.0 << "%\n";
                     std::cout << "      High card:      " << std::setw(10) << (statsArray[9]/handsDealt)*100.0 << "%\n";
                     std::cout << "=========================================\n";
-                    std::cout << "Total number of hands: " << (unsigned long int)handsDealt << std::endl;
+                    std::cout << "Total number of hands: " << (unsigned long long int)handsDealt << std::endl;
                 }
                 else
                     std::cout << "\n** NO HANDS HAVE BEEN DEALT **\n";
@@ -772,12 +744,12 @@ int selectPlayers5game(std::string question)
 
 
 // Prints out player hand and community cards
-void printCards (const struct Card arr[], int playerIndex, bool printingCommunityCards, int startPosition, int arraySize, bool fiveCardGame)
+void printCards (const struct Card arr[], int possibleWinnerIndex, bool printingCommunityCards, int startPosition, int arraySize, bool fiveCardGame)
 {
     std::string handInfo = "";
     if (!printingCommunityCards)
     {
-        handInfo += "\n=-- #" + std::to_string(playerIndex+1) + " --=";
+        handInfo += "\n=-- #" + std::to_string(possibleWinnerIndex+1) + " --=";
         if (!fiveCardGame)
             handInfo += "\nPLAYER HAND: "; 
         else
@@ -831,12 +803,12 @@ void dynamicallyGrowBorder(int arr[], int playersTied)
     {
         for (int i = 2; i < playersTied; i++)
         {
-            bool bigNumber = false;
+            bool twoDigitNumber = false;
 
             if (arr[i] >= 10)
-                bigNumber= true;
+                twoDigitNumber = true;
 
-            if (!bigNumber)
+            if (!twoDigitNumber)
                 std::cout << "----";
             else
                 std::cout << "-----";
@@ -997,8 +969,12 @@ which are mentioned specifically at the end of each function */
 
 int* highCard(const struct Card originalArr[])
 {
-    int* handScore = new int[5]();
+    static int handScore[5];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 5; i++)
+        handScore[i]= 0;
     
     // Copies to 'arr' array, so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1018,8 +994,12 @@ int* highCard(const struct Card originalArr[])
 
 int* pair(const struct Card originalArr[])
 {
-    int* handScore = new int[5]();
+    static int handScore[5];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 5; i++)
+        handScore[i]= 0;
     
     // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1057,8 +1037,12 @@ int* pair(const struct Card originalArr[])
 
 int* twoPair(const struct Card originalArr[])
 {
-    int* handScore = new int[4]();
+    static int handScore[4];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 4; i++)
+        handScore[i]= 0;
     
     // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1104,8 +1088,12 @@ int* twoPair(const struct Card originalArr[])
 
 int* trips(const struct Card originalArr[])
 {
-    int* handScore = new int[4]();
+    static int handScore[4];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 4; i++)
+        handScore[i]= 0;
 
     // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1142,8 +1130,12 @@ int* trips(const struct Card originalArr[])
 
 int* straight(const struct Card originalArr[])
 {
-    int* handScore = new int[2]();
+    static int handScore[2];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 2; i++)
+        handScore[i]= 0;
 
     // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1213,8 +1205,12 @@ int* straight(const struct Card originalArr[])
 
 int* flush(const struct Card originalArr[])
 {
-    int* handScore = new int[7]();
+    static int handScore[7];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 7; i++)
+        handScore[i]= 0;
 
     // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1276,8 +1272,12 @@ int* flush(const struct Card originalArr[])
 
 int* fullHouse(const struct Card originalArr[])
 {
-    int* handScore = new int[3]();
+    static int handScore[3];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 3; i++)
+        handScore[i]= 0;
 
     // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1327,8 +1327,12 @@ int* fullHouse(const struct Card originalArr[])
 
 int* quads(const struct Card originalArr[])
 {
-    int* handScore = new int[3]();
+    static int handScore[3];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 3; i++)
+        handScore[i]= 0;
 
     // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1363,8 +1367,12 @@ int* quads(const struct Card originalArr[])
 
 int* straightflush(const struct Card originalArr[])
 {
-    int* handScore = new int[2]();
+    static int handScore[2];
     Card arr[7];
+
+    // Resets handScore array to values of 0
+    for (int i = 0; i < 2; i++)
+        handScore[i]= 0;
 
     // Copies to 'arr', so 'originalArr' doesn't change
     for (int i = 0; i < 7; i++)
@@ -1386,9 +1394,6 @@ int* straightflush(const struct Card originalArr[])
             }
         }
     }
-    
-    delete [] flushPtr;
-    flushPtr = 0;
 
     bool straightPresent = false;
     // Checks for a straight
@@ -1401,9 +1406,6 @@ int* straightflush(const struct Card originalArr[])
             handScore[1] = straightPtr[1];
             straightPresent = true;
         }
-        
-        delete [] straightPtr;
-        straightPtr = 0;
     }
 
     if (straightPresent && flushPresent)
