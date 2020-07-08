@@ -1,10 +1,7 @@
-#include <cstdlib>
 #include <iostream>
-#include <map>
 #include <iomanip>
 #include <chrono>
 #include <random>
-#include <array>
 
 /* 
 Terminal command to compile on Mac: 
@@ -22,7 +19,7 @@ struct Card
 struct Player_Hand
 {
     int playerNumber;
-    int highCard;      
+    int highCard;
     int points;
     int kicker1;
     int kicker2;
@@ -31,17 +28,19 @@ struct Player_Hand
 };
 
 char firstMenuOption();
-char selectMenuOption(bool fiveCardGame);
+char selectMenuOption(bool sevenCardGame);
 void printByeMessage();
 int selectPlayers7game(std::string question);
 int selectPlayers5game(std::string question);
 void printCards(const struct Card arr[], int possibleWinnerIndex, bool printingCommunityCards, 
-                int startPosition, int arraySize, bool fiveCardGame);
+                int startPosition, int arraySize, bool sevenCardGame);
 void dynamicallyGrowBorder(int arr[], int playersTied);
+void winningHandOutput(int* wins, int numberOfPlayersTied, int trueWinner);
 void sortCardNumber(struct Card arr[], int sizeOfArray);
 void setStats(struct Player_Hand arr[], int index, int pointsEarned, int highCard, int k1, int k2, int k3, int k4);
 void sortBy(std::string choice, struct Player_Hand arr[], int sizeOfArray);
 void changeCardValue(struct Card arr[], int valueCompared, int newValue);
+void setUpArrays(struct Card arr[], const struct Card originalArr[], int handScore[], int sizeHandScore);
 int counterFor(std::string choice, const struct Player_Hand arr[], int sizeOfArray);
 int compareKicker(std::string choice, const struct Player_Hand arr[], int sizeOfArray);
 int* multipleWinners(const struct Player_Hand arr[], int sizeOfArray);
@@ -57,14 +56,13 @@ int* fullHouse(const struct Card originalArr[]);
 int* quads(const struct Card originalArr[]);
 int* straightflush(const struct Card originalArr[]);
 
-// Operator overloading for hash map
-bool operator < (const Card& t1, const Card& t2)
-{
-    if (t1.number == t2.number)
-        return (t1.suit < t2.suit);
-    else
-        return (t1.number < t2.number);
-}
+////////// DECLARATION
+// Global variables
+const int TRUTH_VALUE = 1;
+const int HAND_SIZE = 7;
+const int LOW_ACE_VALUE = 1;
+const int HIGH_ACE_VALUE = 14;
+////////// END DECLARATION
 
 int main()
 {
@@ -73,42 +71,35 @@ int main()
     std::cout << "MoNeYmOnEy======--------======mOnEyMoNeY\n\n";
 
     ////////// DECLARATION
-    // START - Uniform and random number generation declaration
-    std::random_device randomGeneration;
-    std::array<unsigned int, std::mt19937::state_size> seed_data;
-    std::generate_n(seed_data.begin(), seed_data.size(), std::ref(randomGeneration));
-    std::seed_seq seq(std::begin(seed_data), std::end(seed_data));
-    std::mt19937 engineNumberGenerator(seq);
-    std::uniform_int_distribution<int> cardNumber(1, 13);
-    std::uniform_int_distribution<int> cardSuit(1, 4);
-    // END - Uniform and random number generation declaration
-    char selection = 0;
+    // Random number generation
+    std::random_device rd;
+    std::mt19937 randomNumberGenerator(rd());
+    // Used for menu options
+    char selection = '\0', firstSelection = '\0';
+    // Keeps track of statistics for hand strengths
     unsigned long long int statsArray[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     // Activates/deactivates 'cout' output for higher efficiency
     std::streambuf* orig_buf = std::cout.rdbuf();
     // Continuous looping variables
     bool continuousLoopOn = false;
-    int playersPerContinuousLoop = 0;
-    int outputGames = 0;
-    unsigned long long int numberOfLoops = 0;
-    unsigned long long int loopingRequirement = 0;
+    int playersPerContinuousLoop = 0, outputGames = 0;
+    unsigned long long int numberOfLoops = 0, continuousLoopingRequirement = 0;
     // Used for timer
     std::chrono::high_resolution_clock::time_point startTimer, endTimer;
-    int duration;
-    int tempDuration = 0;
-    // Used for first menu option
-    char firstSelection;
-    // Boolean for 5/7 card poker 
-    bool fiveCardGame = false;
+    int duration, tempDuration = 0;
+    // Boolean for 5/7 card poker game
+    bool sevenCardGame = false;
+    // Checks if a winner should be found against all other players
+    bool checkForWinner = false;
     ////////// END DECLARATION
 
     // Choice between 5 or 7 card evaluator
     firstSelection = firstMenuOption();
 
     if (firstSelection == '5')
-        fiveCardGame = true;
+        sevenCardGame = false;
     else if (firstSelection == '7')
-        fiveCardGame = false;
+        sevenCardGame = true;
     else
     {
         printByeMessage();
@@ -119,7 +110,10 @@ int main()
     {
         // Selects menu option, if it is in continous loop it doesn't ask
         if (!continuousLoopOn)
-            selection = selectMenuOption(fiveCardGame);
+        {
+            selection = selectMenuOption(sevenCardGame);
+            checkForWinner = true;
+        }
         else
         {
             selection = '1';
@@ -130,16 +124,21 @@ int main()
                 // Deactivates cout output until looping is over
                 std::cout.rdbuf(NULL);
             }
-            if (loopingRequirement-numberOfLoops == outputGames)
+            // Activates 'cout' stream if games are outputted in continuous loop
+            if (continuousLoopingRequirement-numberOfLoops == outputGames)
+            {
                 std::cout.rdbuf(orig_buf);
+                checkForWinner = true;
+            }
             endTimer = std::chrono::high_resolution_clock::now();
-            duration = std::chrono::duration_cast<std::chrono::seconds>(endTimer - startTimer).count(); 
+            duration = std::chrono::duration_cast<std::chrono::seconds>(endTimer - startTimer).count();
             if (duration % 5 == 0 && duration > tempDuration)
             {
                 tempDuration = duration;
                 std::clog << "LOADING...\n";
                 std::clog << "Time loading: " << duration << " seconds\n";
-                std::clog << "Games completed so far: " << numberOfLoops << "\n\n\n";
+                std::clog << "Games completed: " << numberOfLoops << "\n";
+                std::clog << "Hands evaluated: " << numberOfLoops*playersPerContinuousLoop << "\n\n\n";
             }
             numberOfLoops++;
         }
@@ -147,13 +146,13 @@ int main()
         if (selection == '1')
         {
             ////////// DECLARATION
-            // Selects number of opponents to verse
-            int players = 0;
-            std::map <Card, int> availableCards;
+            int players = 0, deckIndexCounter = 0;
+            const int DECK_SIZE = 52;
+            Card deck[DECK_SIZE];
             ////////// END DECLARATION
 
             // Selects opponents
-            if (!fiveCardGame)
+            if (sevenCardGame)
                 players = (!continuousLoopOn) ? selectPlayers7game("How many players will you like to deals cards to?") : playersPerContinuousLoop;
             else
                 players = (!continuousLoopOn) ? selectPlayers5game("How many players will you like to deals cards to?") : playersPerContinuousLoop;
@@ -163,67 +162,49 @@ int main()
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    const Card cardToInsert = * new Card{i+1, j+1};
-                    availableCards.insert(std::pair<Card, int>(cardToInsert, 1));
+                    Card temp = {i+1, j+1};
+                    deck[deckIndexCounter] = temp;
+                    deckIndexCounter++;
                 }
+            }
+
+            // Shuffles the deck array
+            for (int i = 0; i < DECK_SIZE; i++)
+            {
+                int randomIndex = randomNumberGenerator() % DECK_SIZE;
+                Card hold = deck[i];
+                deck[i] = deck[randomIndex];
+                deck[randomIndex] = hold;
             }
             
             ////////// DECLARATION
-            int communityCounter = 0, playerCardCounter = 0, loopEvaluatorRequirement = 0;
-            Card card, communityCards[5], sevenCardHand[7];
+            int loopRequirement = 0;
+            Card communityCards[HAND_SIZE-2];
             Card* playerCards = new Card[players*2]();
             Card* fiveCardHand = new Card[players*5]();
             ////////// END DECLARATION
 
-            if (!fiveCardGame)
-                loopEvaluatorRequirement = players*2;
-            else
-                loopEvaluatorRequirement = players*5;
-
-            if (!fiveCardGame)
+            if (sevenCardGame)
             {
-                // Creates distinct cards for all players and community cards
-                do
-                {
-                    card.number = cardNumber(engineNumberGenerator);
-                    card.suit = cardSuit(engineNumberGenerator);    
+                for (int i = 0; i < HAND_SIZE-2; i++)
+                    communityCards[i] = deck[i];
 
-                    if (availableCards[card] == 1)
-                    {
-                        if (communityCounter < 5)
-                        {
-                            communityCards[communityCounter] = card;
-                            communityCounter++;
-                        }
-                        else
-                        {
-                            playerCards[playerCardCounter] = card;
-                            playerCardCounter++;
-                        }
-                        availableCards[card] = 0;
-                    }
-                } while (playerCardCounter < loopEvaluatorRequirement);
+                loopRequirement = players*2;
+                for (int i = 0; i < loopRequirement; i++)
+                    playerCards[i] = deck[i+5];
             }
             else
             {
-                // Creates distinct cards for all players and community cards
-                do
-                {
-                    card.number = cardNumber(engineNumberGenerator);
-                    card.suit = cardSuit(engineNumberGenerator);    
-
-                    if (availableCards[card] == 1)
-                    {
-                        fiveCardHand[playerCardCounter] = card;
-                        playerCardCounter++;
-                        availableCards[card] = 0;
-                    }
-                } while (playerCardCounter < loopEvaluatorRequirement);
+                loopRequirement = players*5;
+                for (int i = 0; i < loopRequirement; i++)
+                    fiveCardHand[i] = deck[i];
             }
 
             ////////// DECLARATION
             int possibleWinnerIndex = -1, cardIndex = 0;
-            int* highCardPtr, *pairPtr, *twoPairPtr, *tripsPtr, *straightPtr, *flushPtr, *fullHousePtr, *quadsPtr, *straightFlushPtr;
+            int* highCardPtr = 0, *pairPtr = 0, *twoPairPtr = 0, *tripsPtr = 0, *straightPtr = 0;
+            int* flushPtr = 0, *fullHousePtr = 0, *quadsPtr = 0, *straightFlushPtr = 0;
+            Card sevenCardHand[7];
             Player_Hand* possibleWinner = new Player_Hand[players]();
             ////////// END DECLARATION
 
@@ -231,30 +212,29 @@ int main()
             std::cout << "  THE FOLLOWING LIST SHOWS ALL PLAYER HANDS AND THEIR STRENGTH:";
             std::cout << "\n=================================================================\n";
             
-            while (cardIndex < loopEvaluatorRequirement)
+            while (cardIndex < loopRequirement)
             {
-                // Sets the index for possibleWinner array
                 possibleWinnerIndex++;
 
-                if (!fiveCardGame)
+                if (sevenCardGame)
                 {
-                    // Copies the communnity cards into sevenCardHand array
-                    for (int i = 0; i < 5; i++)
+                    // Copies the community cards into sevenCardHand array
+                    for (int i = 0; i < HAND_SIZE-2; i++)
                         sevenCardHand[i] = communityCards[i];
 
                     // Copies 2 cards of the playerCards array into sevenCardHand array
-                    for (int i = 5; i < 7; i++)
+                    for (int i = 5; i < HAND_SIZE; i++)
                     {
                         sevenCardHand[i] = playerCards[cardIndex];
                         cardIndex++;
                     }
 
-                    printCards(sevenCardHand, possibleWinnerIndex, false, 5, 7, false);
-                    printCards(sevenCardHand, possibleWinnerIndex, true, 0, 5, false);
+                    printCards(sevenCardHand, possibleWinnerIndex, false, 5, 7, true);
+                    printCards(sevenCardHand, possibleWinnerIndex, true, 0, 5, true);
                 }
                 else
                 {
-                    for (int i = 0; i < 5; i++)
+                    for (int i = 0; i < HAND_SIZE-2; i++)
                     {
                         sevenCardHand[i] = fiveCardHand[cardIndex];
                         cardIndex++;
@@ -262,25 +242,16 @@ int main()
                     sevenCardHand[5] = {-5, -5};
                     sevenCardHand[6] = {-10, -10};
 
-                    printCards(sevenCardHand, possibleWinnerIndex, false, 0, 5, true);
+                    printCards(sevenCardHand, possibleWinnerIndex, false, 0, 5, false);
                 }
 
-                // The pointers contain the values that evaluate each hand strength
+                // The following functions determine the hand strength, with values returned as pointers
+                // The values in each index are specified at the end of every hand strength function definition
                 straightFlushPtr = straightflush(sevenCardHand);
-                quadsPtr = quads(sevenCardHand);
-                fullHousePtr = fullHouse(sevenCardHand);
-                flushPtr = flush(sevenCardHand);
-                straightPtr = straight(sevenCardHand);
-                tripsPtr = trips(sevenCardHand);
-                twoPairPtr = twoPair(sevenCardHand);
-                pairPtr = pair(sevenCardHand);
-                highCardPtr = highCard(sevenCardHand);
-
-                ///// The following finds the hand strength for each player /////
-                if (straightFlushPtr[0] == 1)
+                if (straightFlushPtr[0] == TRUTH_VALUE)
                 {
                     setStats(possibleWinner, possibleWinnerIndex, 200, straightFlushPtr[1], 0, 0, 0, 0);
-                    if (straightFlushPtr[1] == 14)
+                    if (straightFlushPtr[1] == HIGH_ACE_VALUE)
                     {
                         std::cout << "\nHand strength: ROYAL FLUSH\n";
                         statsArray[0] += 1;
@@ -290,52 +261,75 @@ int main()
                         std::cout << "\nHand strength: STRAIGHT FLUSH\n";
                         statsArray[1] += 1;
                     }
+                    continue;
                 }
-                else if (quadsPtr[0] == 1)
+
+                quadsPtr = quads(sevenCardHand);
+                if (quadsPtr[0] == TRUTH_VALUE)
                 {
                     std::cout << "\nHand strength: QUADS\n";
                     setStats(possibleWinner, possibleWinnerIndex, 190, quadsPtr[1], quadsPtr[2], 0, 0, 0);
                     statsArray[2] += 1;
+                    continue;
                 }
-                else if (fullHousePtr[0] == 1)
+
+                fullHousePtr = fullHouse(sevenCardHand);
+                if (fullHousePtr[0] == TRUTH_VALUE)
                 {
                     std::cout << "\nHand strength: FULL HOUSE\n";
                     setStats(possibleWinner, possibleWinnerIndex, 180, fullHousePtr[1], fullHousePtr[2], 0, 0, 0);
                     statsArray[3] += 1;
+                    continue;
                 }
-                else if (flushPtr[0] == 1)
+
+                flushPtr = flush(sevenCardHand);
+                if (flushPtr[0] == TRUTH_VALUE)
                 {
                     std::cout << "\nHand strength: FLUSH\n";
                     setStats(possibleWinner, possibleWinnerIndex, 170, flushPtr[1], flushPtr[2], flushPtr[3],
                             flushPtr[4], flushPtr[5]);
                     statsArray[4] += 1;
+                    continue;
                 }
-                else if (straightPtr[0] == 1)
+
+                straightPtr = straight(sevenCardHand);
+                if (straightPtr[0] == TRUTH_VALUE)
                 {
                     std::cout << "\nHand strength: STRAIGHT\n";
                     setStats(possibleWinner, possibleWinnerIndex, 160, straightPtr[1], 0, 0, 0, 0);
                     statsArray[5] += 1;
+                    continue;
                 }
-                else if (tripsPtr[0] == 1)
+
+                tripsPtr = trips(sevenCardHand);
+                if (tripsPtr[0] == TRUTH_VALUE)
                 {
                     std::cout << "\nHand strength: TRIPS\n";
                     setStats(possibleWinner, possibleWinnerIndex, 150, tripsPtr[1], tripsPtr[2], tripsPtr[3], 0, 0);
                     statsArray[6] += 1;
+                    continue;
                 }
-                else if (twoPairPtr[0] == 1)
+
+                twoPairPtr = twoPair(sevenCardHand);
+                if (twoPairPtr[0] == TRUTH_VALUE)
                 {
                     std::cout << "\nHand strength: TWO PAIR\n";
                     setStats(possibleWinner, possibleWinnerIndex, 140, twoPairPtr[1], twoPairPtr[2], twoPairPtr[3], 0, 0);
                     statsArray[7] += 1;
+                    continue;
                 }
-                else if (pairPtr[0] == 1)
+
+                pairPtr = pair(sevenCardHand);
+                if (pairPtr[0] == TRUTH_VALUE)
                 {
                     std::cout << "\nHand strength: PAIR\n";
                     setStats(possibleWinner, possibleWinnerIndex, 130, pairPtr[1], pairPtr[2], pairPtr[3], pairPtr[4], 0);
                     statsArray[8] += 1;
+                    continue;
                 }
                 else
                 {
+                    highCardPtr = highCard(sevenCardHand);
                     std::cout << "\nHand strength: HIGH CARD\n";
                     setStats(possibleWinner, possibleWinnerIndex, highCardPtr[0], highCardPtr[0], highCardPtr[1],
                             highCardPtr[2], highCardPtr[3], highCardPtr[4]);
@@ -348,215 +342,195 @@ int main()
             delete [] fiveCardHand;
             fiveCardHand = 0;
 
-            ////////// DECLARATION
-            int* wins = 0;
-            int samePointsCounter = 0, trueWinner = 0, numberOfPlayersTied = 0;
-            ////////// END DECLARATION
-
-            /*  The rest of this program determines the winner based on kickers and highcards.
-            First the program is sorted by player points, and the players with the highest 
-            points are compared to each other based on their highcard and then the kickers 
-            (if need be). Some only require the points to be compared or some of the kickers. */
-
-            // sortBy, Sorts player hands by whatever is written in the first parameter i.e. "points"
-            sortBy("points", possibleWinner, players);
-            // counterFor, Counts the amount of players that have the same amount of whatever is written in the first parameter i.e. "points"
-            samePointsCounter = counterFor("points", possibleWinner, players);
-            
-            /**** The rest of the program follows a similar pattern to the one explained above ****/
-            if (samePointsCounter == 1)
-                trueWinner = possibleWinner[0].playerNumber;
-            else
+            // Checks for winner only if games are being outputted to the console
+            if (checkForWinner)
             {
                 ////////// DECLARATION
-                int sameHighCardCounter = 1;
+                int* wins = 0;
+                int samePointsCounter = 0, trueWinner = 0, numberOfPlayersTied = 0;
                 ////////// END DECLARATION
 
-                sortBy("highcard", possibleWinner, samePointsCounter);
-                sameHighCardCounter = counterFor("highcard", possibleWinner, samePointsCounter);
+                /* The rest of this program determines the winner based on kickers and highcards.
+                First the program is sorted by player points, and the players with the highest 
+                points are compared to each other based on their highcard and then the kickers 
+                (if need be). Some only require the points to be compared or some of the kickers. */
 
-                // Finds winner for straightflush and straight
-                if ((sameHighCardCounter > 1 && possibleWinner[0].points == 200) || 
-                    (sameHighCardCounter > 1 && possibleWinner[0].points == 160))
-                {
-                    wins = multipleWinners(possibleWinner, sameHighCardCounter);
-                    numberOfPlayersTied = sameHighCardCounter;
-                }
-                else if (sameHighCardCounter > 1)
+                sortBy("points", possibleWinner, players);
+                samePointsCounter = counterFor("points", possibleWinner, players);
+                
+                if (samePointsCounter == 1)
+                    trueWinner = possibleWinner[0].playerNumber;
+                else
                 {
                     ////////// DECLARATION
-                    int sameKicker1Counter = 1,  sameKicker2Counter = 1, sameKicker3Counter = 1, sameKicker4Counter = 1;
+                    int sameHighCardCounter = 1;
                     ////////// END DECLARATION
 
-                    sortBy("kicker1", possibleWinner, sameHighCardCounter);
-                    sameKicker1Counter = counterFor("kicker1", possibleWinner, sameHighCardCounter);
+                    sortBy("highcard", possibleWinner, samePointsCounter);
+                    sameHighCardCounter = counterFor("highcard", possibleWinner, samePointsCounter);
 
-                    switch (possibleWinner[0].points)
+                    // Finds winner for straightflush and straight
+                    if ((sameHighCardCounter > 1 && possibleWinner[0].points == 200) || 
+                        (sameHighCardCounter > 1 && possibleWinner[0].points == 160))
                     {
-                        case 190: // Finds winner for quads and fullhouse
-                        case 180:
-                        {
-                            if (sameKicker1Counter > 1)
-                            {
-                                wins = multipleWinners(possibleWinner, sameHighCardCounter);
-                                numberOfPlayersTied = sameHighCardCounter;
-                            }
-                            else
-                                trueWinner = compareKicker("kicker1", possibleWinner, sameHighCardCounter);
-                            break;
-                        }
-                        case 150: // Finds winner for trips and two pair
-                        case 140:
-                        {
-                            if (sameKicker1Counter > 1)
-                            {
-                                sortBy("kicker2", possibleWinner, sameKicker1Counter);
-                                sameKicker2Counter = counterFor("kicker2", possibleWinner, sameKicker1Counter);
+                        wins = multipleWinners(possibleWinner, sameHighCardCounter);
+                        numberOfPlayersTied = sameHighCardCounter;
+                    }
+                    else if (sameHighCardCounter > 1)
+                    {
+                        ////////// DECLARATION
+                        int sameKicker1Counter = 1,  sameKicker2Counter = 1, sameKicker3Counter = 1, sameKicker4Counter = 1;
+                        ////////// END DECLARATION
 
-                                if (sameKicker2Counter > 1)
+                        sortBy("kicker1", possibleWinner, sameHighCardCounter);
+                        sameKicker1Counter = counterFor("kicker1", possibleWinner, sameHighCardCounter);
+
+                        switch (possibleWinner[0].points)
+                        {
+                            case 190: // Finds winner for quads and fullhouse
+                            case 180:
+                            {
+                                if (sameKicker1Counter > 1)
                                 {
-                                    wins = multipleWinners(possibleWinner, sameKicker2Counter);
-                                    numberOfPlayersTied = sameKicker2Counter;
+                                    wins = multipleWinners(possibleWinner, sameHighCardCounter);
+                                    numberOfPlayersTied = sameHighCardCounter;
                                 }
                                 else
-                                    trueWinner = compareKicker("kicker2", possibleWinner, sameKicker1Counter);
+                                    trueWinner = compareKicker("kicker1", possibleWinner, sameHighCardCounter);
+                                break;
                             }
-                            else
-                                trueWinner = compareKicker("kicker1", possibleWinner, sameHighCardCounter);
-                            break;
-                        }
-                        case 130: // Finds winner for single pair
-                        {
-                            if (sameKicker1Counter > 1)
+                            case 150: // Finds winner for trips and two pair
+                            case 140:
                             {
-                                sortBy("kicker2", possibleWinner, sameKicker1Counter);
-                                sameKicker2Counter = counterFor("kicker2", possibleWinner, sameKicker1Counter);
-
-                                if (sameKicker2Counter > 1)
+                                if (sameKicker1Counter > 1)
                                 {
-                                    sortBy("kicker3", possibleWinner, sameKicker2Counter);
-                                    sameKicker3Counter = counterFor("kicker3", possibleWinner, sameKicker2Counter);
+                                    sortBy("kicker2", possibleWinner, sameKicker1Counter);
+                                    sameKicker2Counter = counterFor("kicker2", possibleWinner, sameKicker1Counter);
 
-                                    if (sameKicker3Counter > 1)
+                                    if (sameKicker2Counter > 1)
                                     {
-                                        wins = multipleWinners(possibleWinner, sameKicker3Counter);
-                                        numberOfPlayersTied = sameKicker3Counter;
+                                        wins = multipleWinners(possibleWinner, sameKicker2Counter);
+                                        numberOfPlayersTied = sameKicker2Counter;
                                     }
                                     else
-                                        trueWinner = compareKicker("kicker3", possibleWinner, sameKicker2Counter);
+                                        trueWinner = compareKicker("kicker2", possibleWinner, sameKicker1Counter);
                                 }
                                 else
-                                    trueWinner = compareKicker("kicker2", possibleWinner, sameKicker1Counter);
+                                    trueWinner = compareKicker("kicker1", possibleWinner, sameHighCardCounter);
+                                break;
                             }
-                            else
-                                trueWinner = compareKicker("kicker1", possibleWinner, sameHighCardCounter);
-                            break;
-                        }
-                        case 170: // Finds winner for flush and high cards
-                        default:
-                        {
-                            if (sameKicker1Counter > 1)
+                            case 130: // Finds winner for single pair
                             {
-                                sortBy("kicker2", possibleWinner, sameKicker1Counter);
-                                sameKicker2Counter = counterFor("kicker2", possibleWinner, sameKicker1Counter);
-
-                                if (sameKicker2Counter > 1)
+                                if (sameKicker1Counter > 1)
                                 {
-                                    sortBy("kicker3", possibleWinner, sameKicker2Counter);
-                                    sameKicker3Counter = counterFor("kicker3", possibleWinner, sameKicker2Counter);
+                                    sortBy("kicker2", possibleWinner, sameKicker1Counter);
+                                    sameKicker2Counter = counterFor("kicker2", possibleWinner, sameKicker1Counter);
 
-                                    if (sameKicker3Counter > 1)
+                                    if (sameKicker2Counter > 1)
                                     {
-                                        sortBy("kicker4", possibleWinner, sameKicker3Counter);
-                                        sameKicker4Counter = counterFor("kicker4", possibleWinner, sameKicker3Counter);
+                                        sortBy("kicker3", possibleWinner, sameKicker2Counter);
+                                        sameKicker3Counter = counterFor("kicker3", possibleWinner, sameKicker2Counter);
 
-                                        if (sameKicker4Counter > 1)
+                                        if (sameKicker3Counter > 1)
                                         {
-                                            wins = multipleWinners(possibleWinner, sameKicker4Counter);
-                                            numberOfPlayersTied = sameKicker4Counter;
+                                            wins = multipleWinners(possibleWinner, sameKicker3Counter);
+                                            numberOfPlayersTied = sameKicker3Counter;
                                         }
                                         else
-                                            trueWinner = compareKicker("kicker4", possibleWinner, sameKicker3Counter);
+                                            trueWinner = compareKicker("kicker3", possibleWinner, sameKicker2Counter);
                                     }
                                     else
-                                        trueWinner = compareKicker("kicker3", possibleWinner, sameKicker2Counter);
+                                        trueWinner = compareKicker("kicker2", possibleWinner, sameKicker1Counter);
                                 }
                                 else
-                                    trueWinner = compareKicker("kicker2", possibleWinner, sameKicker1Counter);
+                                    trueWinner = compareKicker("kicker1", possibleWinner, sameHighCardCounter);
+                                break;
                             }
-                            else
-                                trueWinner = compareKicker("kicker1", possibleWinner, sameHighCardCounter);
-                            break;
+                            case 170: // Finds winner for flush and high cards
+                            default:
+                            {
+                                if (sameKicker1Counter > 1)
+                                {
+                                    sortBy("kicker2", possibleWinner, sameKicker1Counter);
+                                    sameKicker2Counter = counterFor("kicker2", possibleWinner, sameKicker1Counter);
+
+                                    if (sameKicker2Counter > 1)
+                                    {
+                                        sortBy("kicker3", possibleWinner, sameKicker2Counter);
+                                        sameKicker3Counter = counterFor("kicker3", possibleWinner, sameKicker2Counter);
+
+                                        if (sameKicker3Counter > 1)
+                                        {
+                                            sortBy("kicker4", possibleWinner, sameKicker3Counter);
+                                            sameKicker4Counter = counterFor("kicker4", possibleWinner, sameKicker3Counter);
+
+                                            if (sameKicker4Counter > 1)
+                                            {
+                                                wins = multipleWinners(possibleWinner, sameKicker4Counter);
+                                                numberOfPlayersTied = sameKicker4Counter;
+                                            }
+                                            else
+                                                trueWinner = compareKicker("kicker4", possibleWinner, sameKicker3Counter);
+                                        }
+                                        else
+                                            trueWinner = compareKicker("kicker3", possibleWinner, sameKicker2Counter);
+                                    }
+                                    else
+                                        trueWinner = compareKicker("kicker2", possibleWinner, sameKicker1Counter);
+                                }
+                                else
+                                    trueWinner = compareKicker("kicker1", possibleWinner, sameHighCardCounter);
+                                break;
+                            }
                         }
                     }
+                    else
+                        trueWinner = possibleWinner[0].playerNumber;
                 }
-                else
-                    trueWinner = possibleWinner[0].playerNumber;
-            }
 
-            delete [] possibleWinner;
-            possibleWinner = 0;
-
-            #pragma region Handles Output For Winning Hand(s)
-
-            if (numberOfPlayersTied > 0)
-            {
-                std::cout << "\n    ===---------------------";
-                dynamicallyGrowBorder(wins, numberOfPlayersTied);
-                std::cout << "------------------===\n";
-                std::cout << "        ITS A TIE BETWEEN PLAYERS";
-                for (int i = 0; i < numberOfPlayersTied-1; i++)
-                    std::cout << " #" << wins[i] << ",";
-                std::cout << " and #" << wins[numberOfPlayersTied-1] << "!\n";
-                std::cout << "    =====-------------------";
-                dynamicallyGrowBorder(wins, numberOfPlayersTied);
-                std::cout << "----------------=====\n\n";
+                // Outputs ties or winner
+                winningHandOutput(wins, numberOfPlayersTied, trueWinner);
 
                 delete [] wins;
                 wins = 0;
             }
-            else
-            {
-                std::cout << "\n    WINNER===WINNER===WINNER===WINNER===WINNER===WINNER===WINNER===WINNER\n";
-                std::cout << "    ||                      *****"  << " PLAYER #" 
-                                                        << trueWinner <<   " *****                      ||\n";
-                std::cout << "    WINNER===WINNER===WINNER===WINNER===WINNER===WINNER===WINNER===WINNER\n\n";
-            }
 
-            #pragma endregion
+            delete [] possibleWinner;
+            possibleWinner = 0;
         }
         else if (selection == '2')
         {
             continuousLoopOn = true;
+            checkForWinner = false;
             playersPerContinuousLoop = 0;
             numberOfLoops = 0;
 
             do
             {
                 std::cout << "\nFor how many games will you like to speed deal cards?\n" << ">>> ";
-                std::cin >> loopingRequirement;
+                std::cin >> continuousLoopingRequirement;
 
-                if (loopingRequirement < 2)
+                if (continuousLoopingRequirement < 2)
                 {
                     std::cin.clear();
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                     std::cerr << "\nVALUE MUST BE GREATER THAN 1!";
                 }
 
-            } while (loopingRequirement < 2);
+            } while (continuousLoopingRequirement < 2);
 
-            if (!fiveCardGame)
+            if (sevenCardGame)
                 playersPerContinuousLoop = selectPlayers7game("How many players in each game?");
             else
                 playersPerContinuousLoop = selectPlayers5game("How many players in each game?");
             
             std::cout << "\nFor how many games will you like player hand output?\n" << ">>> ";
 
-            while (!(std::cin >> outputGames) || outputGames > loopingRequirement || outputGames < 0)
+            while (!(std::cin >> outputGames) || outputGames > continuousLoopingRequirement || outputGames < 0)
             {
                 std::cin.clear();
                 std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cerr << "\nINVALID AMOUNT! MAX: " << loopingRequirement << " MIN: 0";
+                std::cerr << "\nINVALID AMOUNT! MAX: " << continuousLoopingRequirement << " MIN: 0";
                 std::cout << "\nFor how many games will you like player hand output?\n" << ">>> ";
             }
         }
@@ -596,21 +570,28 @@ int main()
             }
             else
             {
-                for (int i = 0; i < 10; i++)
-                    statsArray[i] = 0;
+                // Resets the statsArray to all values of 0
+                for (unsigned long long int& element : statsArray)
+                    element = 0;
                 
                 std::cout << "\n** Statistics have been RESET **\n";
             }
         }
 
-        if (numberOfLoops == loopingRequirement)
+        if ((numberOfLoops == continuousLoopingRequirement) && continuousLoopOn)
         {
-            if (continuousLoopOn && outputGames == 0)
-                std::clog << "FINISHED LOADING!\n\n\n";
-            continuousLoopOn = false;
+            if (outputGames >= 0)
+            {
+                std::clog << "FINISHED LOADING!\n";
+                duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTimer - startTimer).count();
+                int wholeSecond = duration/1000;
+                std::clog << "Total loading time: " << wholeSecond << "." << duration-(wholeSecond*1000) << " seconds\n\n\n";
+            }
             // Activates output
             if (outputGames == 0)
                 std::cout.rdbuf(orig_buf);
+            continuousLoopOn = false;
+            tempDuration = 0;
         }
         
     } while (selection != 'Q');
@@ -629,7 +610,7 @@ int main()
 // Returns first menu option
 char firstMenuOption()
 {
-    char selection = 0;
+    char selection = '\0';
 
     std::cout << "\nMeNuMeNu%%%===========%%%MeNuMeNu\n";
     std::cout << "    5 - Play 5 card evaluator\n";
@@ -653,13 +634,14 @@ char firstMenuOption()
     return selection;
 }
 
+
 // Returns the menu selection
-char selectMenuOption(bool fiveCardGame)
+char selectMenuOption(bool sevenCardGame)
 {
-    char selection = 0;
+    char selection = '\0';
 
     std::cout << "\nMeNuMeNu%%%========%%%MeNuMeNu\n";
-    if (!fiveCardGame)
+    if (sevenCardGame)
         std::cout << "     1 - Deal SEVEN cards\n";
     else
         std::cout << "     1 - Deal FIVE cards\n";
@@ -744,13 +726,13 @@ int selectPlayers5game(std::string question)
 
 
 // Prints out player hand and community cards
-void printCards (const struct Card arr[], int possibleWinnerIndex, bool printingCommunityCards, int startPosition, int arraySize, bool fiveCardGame)
+void printCards (const struct Card arr[], int possibleWinnerIndex, bool printingCommunityCards, int startPosition, int arraySize, bool sevenCardGame)
 {
     std::string handInfo = "";
     if (!printingCommunityCards)
     {
         handInfo += "\n=-- #" + std::to_string(possibleWinnerIndex+1) + " --=";
-        if (!fiveCardGame)
+        if (sevenCardGame)
             handInfo += "\nPLAYER HAND: "; 
         else
             handInfo += "\nFIVE CARD HAND:"; 
@@ -763,7 +745,7 @@ void printCards (const struct Card arr[], int possibleWinnerIndex, bool printing
     {
         if (i == startPosition && printingCommunityCards)
             handInfo += "  * ";
-        else if (printingCommunityCards || fiveCardGame)
+        else if (printingCommunityCards || !sevenCardGame)
             handInfo += " * ";
         
         switch(arr[i].number)
@@ -785,7 +767,7 @@ void printCards (const struct Card arr[], int possibleWinnerIndex, bool printing
             case 4: handInfo +=  "Diamonds"; break;
         }
 
-        if (!printingCommunityCards && i != 6 && !fiveCardGame)
+        if (!printingCommunityCards && i != 6 && sevenCardGame)
             handInfo += ", ";
     }
     std::cout << handInfo;
@@ -817,6 +799,39 @@ void dynamicallyGrowBorder(int arr[], int playersTied)
 }
 
 
+// Outputs ties or winner
+void winningHandOutput(int* wins, int numberOfPlayersTied, int trueWinner)
+{
+    if (numberOfPlayersTied > 0)
+    {
+        std::cout << "\n    ===---------------------";
+        dynamicallyGrowBorder(wins, numberOfPlayersTied);
+        std::cout << "------------------===\n";
+        std::cout << "        ITS A TIE BETWEEN PLAYERS";
+        for (int i = 0; i < numberOfPlayersTied-1; i++)
+            std::cout << " #" << wins[i] << ",";
+        std::cout << " and #" << wins[numberOfPlayersTied-1] << "!\n";
+        std::cout << "    =====-------------------";
+        dynamicallyGrowBorder(wins, numberOfPlayersTied);
+        std::cout << "----------------=====\n\n";
+    }
+    else
+    {
+        std::cout << "\n    WINNER===WINNER===WINNER===WINNER==";
+        // Makes border 1 character longer if winner is double digit number
+        if (trueWinner > 9)
+            std::cout << "="; 
+        std::cout << "=WINNER===WINNER===WINNER===WINNER\n";
+        std::cout << "    ||                      *****"  << " PLAYER #" 
+                            << trueWinner <<   " *****                      ||\n";
+        std::cout << "    WINNER===WINNER===WINNER===WINNER==";
+        if (trueWinner > 9)
+            std::cout << "="; 
+        std::cout << "=WINNER===WINNER===WINNER===WINNER\n\n";
+    }
+}
+
+
 // Sorts array from highest card number to lowest card number regardless of suit
 void sortCardNumber(struct Card arr[], int sizeOfArray)
 {
@@ -826,8 +841,7 @@ void sortCardNumber(struct Card arr[], int sizeOfArray)
         {
             if (arr[j].number < arr[j+1].number)
             {
-                Card hold;
-                hold = arr[j];
+                Card hold = arr[j];
                 arr[j] = arr[j+1];
                 arr[j+1] = hold;
             }
@@ -863,8 +877,7 @@ void sortBy(std::string choice, struct Player_Hand arr[], int sizeOfArray)
                 (choice == "kicker3" && arr[j].kicker3 < arr[j+1].kicker3) ||
                 (choice == "kicker4" && arr[j].kicker4 < arr[j+1].kicker4))
             {
-                Player_Hand temp;
-                temp = arr[j];
+                Player_Hand temp = arr[j];
                 arr[j] = arr[j+1];
                 arr[j+1] = temp;
             }
@@ -876,9 +889,22 @@ void sortBy(std::string choice, struct Player_Hand arr[], int sizeOfArray)
 // Change value of card to new value, i.e. changing ace value from 1 to 14
 void changeCardValue(struct Card arr[], int valueCompared, int newValue)
 {
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < HAND_SIZE; i++)
         if (arr[i].number == valueCompared)
             arr[i].number = newValue;
+}
+
+
+// Resets handscore values and copies 'originalArr' values to 'arr'
+void setUpArrays(struct Card arr[], const struct Card originalArr[], int handScore[], int sizeHandScore)
+{
+    // Resets handScore array to values of 0
+    for (int i = 0; i < sizeHandScore; i++)
+        handScore[i] = 0;
+    
+    // Copies to 'arr' array, so 'originalArr' doesn't change
+    for (int i = 0; i < HAND_SIZE; i++)
+        arr[i] = originalArr[i];
 }
 
 
@@ -965,26 +991,19 @@ int* multipleWinners(const struct Player_Hand arr[], int sizeOfArray)
 array that returns several values to determine serveral factors, 
 which are mentioned specifically at the end of each function */
 /* Remember: Aces can act as the number 1 and 14 */
- 
+
 
 int* highCard(const struct Card originalArr[])
 {
     static int handScore[5];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 5; i++)
-        handScore[i]= 0;
-    
-    // Copies to 'arr' array, so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
-
-    changeCardValue(arr, 1, 14);
-    sortCardNumber(arr, 7);
+    setUpArrays(arr, originalArr, handScore, 5);
+    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
+    sortCardNumber(arr, HAND_SIZE);
 
     // Copies 5 highest cards into handScore array
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < HAND_SIZE-2; i++)
         handScore[i] = arr[i].number;
 
     // handScore[0-4] = high card and kickers
@@ -995,42 +1014,35 @@ int* highCard(const struct Card originalArr[])
 int* pair(const struct Card originalArr[])
 {
     static int handScore[5];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 5; i++)
-        handScore[i]= 0;
-    
-    // Copies to 'arr', so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
-
-    changeCardValue(arr, 1, 14);
-    sortCardNumber(arr, 7);
+    setUpArrays(arr, originalArr, handScore, 5);
+    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
+    sortCardNumber(arr, HAND_SIZE);
 
     // Finds the card number of the pair
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < HAND_SIZE; i++)
     {
         if (arr[i].number == arr[i+1].number)
         {
-            handScore[0] = 1;
+            handScore[0] = TRUTH_VALUE;
             handScore[1] = arr[i].number;
             break;
         }
     }
 
     // If a pair is present, this sets its 3 kickers
-    if (handScore[0] == 1)
+    if (handScore[0] == TRUTH_VALUE)
     {
         changeCardValue(arr, handScore[1], -1);
-        sortCardNumber(arr, 7);
+        sortCardNumber(arr, HAND_SIZE);
         handScore[2] = arr[0].number;
         handScore[3] = arr[1].number;
         handScore[4] = arr[2].number;
     }
 
-    /* handScore[0] = wether or not there is a single pair, handScore[1] = high card of single pair, handScore[2] = first kicker
-    handScore[3] = second kicker, handScore[4] = last kicker */
+    /* handScore[0] = wether or not there is a single pair (TRUTH_VALUE = true, 0 = false), handScore[1] = high card of single pair, 
+    handScore[2] = first kicker handScore[3] = second kicker, handScore[4] = last kicker */
     return handScore;
 }
 
@@ -1038,50 +1050,43 @@ int* pair(const struct Card originalArr[])
 int* twoPair(const struct Card originalArr[])
 {
     static int handScore[4];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 4; i++)
-        handScore[i]= 0;
-    
-    // Copies to 'arr', so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
-
-    changeCardValue(arr, 1, 14);
-    sortCardNumber(arr, 7);
+    setUpArrays(arr, originalArr, handScore, 4);
+    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
+    sortCardNumber(arr, HAND_SIZE);
 
     bool checkSecondPair = false;
     // Finds two pairs and sets their values
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < HAND_SIZE; i++)
     {
         if (arr[i].number == arr[i+1].number)
         {
-            if (checkSecondPair)
-            {
-                handScore[0] = 1;
-                handScore[2] = arr[i].number;
-                break;
-            }
-            else
+            if (!checkSecondPair)
             {
                 handScore[1] = arr[i].number;
                 checkSecondPair = true;
+            }
+            else
+            {
+                handScore[0] = TRUTH_VALUE;
+                handScore[2] = arr[i].number;
+                break;
             }
         }
     }
 
     // Sets kicker if two pairs are present
-    if (handScore[0] == 1)
+    if (handScore[0] == TRUTH_VALUE)
     {
         changeCardValue(arr, handScore[1], -1);
         changeCardValue(arr, handScore[2], -1);
-        sortCardNumber(arr, 7);
+        sortCardNumber(arr, HAND_SIZE);
         handScore[3] = arr[0].number;
     }
 
-    /* handScore[0] = wether or not there is a two pair, handScore[1] = value of highest pair, 
-    handScore[2] = value of second highest pair, handScore[3] = kicker */
+    /* handScore[0] = wether or not there is a two pair (TRUTH_VALUE = true, 0 = false), 
+    handScore[1] = value of highest pair, handScore[2] = value of second highest pair, handScore[3] = kicker */
     return handScore;
 }
 
@@ -1089,41 +1094,34 @@ int* twoPair(const struct Card originalArr[])
 int* trips(const struct Card originalArr[])
 {
     static int handScore[4];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 4; i++)
-        handScore[i]= 0;
-
-    // Copies to 'arr', so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
-
-    changeCardValue(arr, 1, 14);
-    sortCardNumber(arr, 7);
+    setUpArrays(arr, originalArr, handScore, 4);
+    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
+    sortCardNumber(arr, HAND_SIZE);
 
     // Finds if trips are present and sets value
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < HAND_SIZE-2; i++)
     {
         if (arr[i].number == arr[i+1].number && arr[i].number == arr[i+2].number)
         {
-            handScore[0] = 1;
+            handScore[0] = TRUTH_VALUE;
             handScore[1] = arr[i].number;
             break;
         }
     }
 
     // Sets two kickers if trips are present
-    if (handScore[0] == 1)
+    if (handScore[0] == TRUTH_VALUE)
     {
         changeCardValue(arr, handScore[1], -1);
-        sortCardNumber(arr, 7);
+        sortCardNumber(arr, HAND_SIZE);
         handScore[2] = arr[0].number;
         handScore[3] = arr[1].number;
     }
 
-    /* handScore[0] = wether or not there are trips, handScore[1] = trips high card, 
-    handScore[2] = first kicker, handScore[3] = second kicker */
+    /* handScore[0] = wether or not there are trips (TRUTH_VALUE = true, 0 = false), 
+    handScore[1] = trips high card, handScore[2] = first kicker, handScore[3] = second kicker */
     return handScore;
 }
 
@@ -1131,33 +1129,25 @@ int* trips(const struct Card originalArr[])
 int* straight(const struct Card originalArr[])
 {
     static int handScore[2];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 2; i++)
-        handScore[i]= 0;
-
-    // Copies to 'arr', so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
-
-    sortCardNumber(arr, 7);
+    setUpArrays(arr, originalArr, handScore, 2);
+    sortCardNumber(arr, HAND_SIZE);
 
     int counter = 0;
     // Sets all but one of any repeated cards as -1, to not interfer with following algorithm
-    for (int i = 0; i < 7-counter; i++)
+    for (int i = 0; i < HAND_SIZE-counter; i++)
     {
         if (arr[i].number == arr[i+1].number)
         {
-            Card newCard = {-1, -1};
-            arr[i] = newCard;
-            sortCardNumber(arr, 7);
+            arr[i] = {-1, -1};
+            sortCardNumber(arr, HAND_SIZE);
             counter++;
             i = 0;
         }
     }
 
-    sortCardNumber(arr, 7);
+    sortCardNumber(arr, HAND_SIZE);
     
     bool ace = false;
     // Determines if there is a straight taking into account the ace as number 1 and 14
@@ -1165,15 +1155,15 @@ int* straight(const struct Card originalArr[])
     {
         // If ace is present algorithm will check for ace high straight
         if (ace)
-            sortCardNumber(arr, 7);
+            sortCardNumber(arr, HAND_SIZE);
 
         // Checks for straight
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < HAND_SIZE-4; i++)
         {
             if (arr[i].number == arr[i+1].number+1 && arr[i+1].number == arr[i+2].number+1 &&
                 arr[i+2].number == arr[i+3].number+1 && arr[i+3].number == arr[i+4].number+1)
             {
-                handScore[0] = 1;
+                handScore[0] = TRUTH_VALUE;
                 handScore[1] = arr[i].number;
                 break;
             }
@@ -1186,11 +1176,11 @@ int* straight(const struct Card originalArr[])
         // Checks if ace is present
         if (!ace)
         {
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < HAND_SIZE; i++)
             {
-                if (arr[i].number == 1)
+                if (arr[i].number == LOW_ACE_VALUE)
                 {
-                    arr[i].number = 14;
+                    arr[i].number = HIGH_ACE_VALUE;
                     ace = true;
                 }
             }
@@ -1198,7 +1188,8 @@ int* straight(const struct Card originalArr[])
 
     } while (ace);
 
-    // handScore[0] = wether or not there is a straight, handScore[1] = high card of straight
+    /* handScore[0] = wether or not there is a straight (TRUTH_VALUE = true, 0 = false), 
+    handScore[1] = high card of straight */
     return handScore;
 }
 
@@ -1206,19 +1197,13 @@ int* straight(const struct Card originalArr[])
 int* flush(const struct Card originalArr[])
 {
     static int handScore[7];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 7; i++)
-        handScore[i]= 0;
-
-    // Copies to 'arr', so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
-
+    setUpArrays(arr, originalArr, handScore, 7);
+    
     int counter1 = 0, counter2 = 0, counter3 = 0, counter4 = 0;
     // Finds how many of each suit there are
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < HAND_SIZE; i++)
     {
         if (arr[i].suit == 4)
             counter4++;
@@ -1234,8 +1219,8 @@ int* flush(const struct Card originalArr[])
     if (counter1 < 5 && counter2 < 5 && counter3 < 5 && counter4 < 5)
         return handScore;
 
-    changeCardValue(arr, 1, 14);
-    sortCardNumber(arr, 7);
+    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
+    sortCardNumber(arr, HAND_SIZE);
 
     // Finds flush card numbers and suit number
     for (int i = 1; i < 5; i++)
@@ -1245,12 +1230,12 @@ int* flush(const struct Card originalArr[])
             (counter3 >= 5 && i == 3) || 
             (counter4 >= 5 && i == 4))
         {
-            handScore[0] = 1;
+            handScore[0] = TRUTH_VALUE;
             // Sets the suit of the flush
             handScore[6] = i;
             int indexCounter = 0;
             // Sets the high card and kickers
-            for (int j = 0; j < 7; j++)
+            for (int j = 0; j < HAND_SIZE; j++)
             {
                 if (arr[j].suit == i)
                 {
@@ -1264,8 +1249,8 @@ int* flush(const struct Card originalArr[])
         }
     }
 
-    /* handScore[0] = wether or not there is a flush, handScore[1] = high card of flush, 
-    handScore[2-5] = kickers, handScore[6] = suit of flush */
+    /* handScore[0] = wether or not there is a flush (TRUTH_VALUE = true, 0 = false), 
+    handScore[1] = high card of flush, handScore[2-5] = kickers, handScore[6] = suit of flush */
     return handScore;
 }
 
@@ -1273,22 +1258,15 @@ int* flush(const struct Card originalArr[])
 int* fullHouse(const struct Card originalArr[])
 {
     static int handScore[3];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 3; i++)
-        handScore[i]= 0;
-
-    // Copies to 'arr', so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
-
-    changeCardValue(arr, 1, 14);
-    sortCardNumber(arr, 7);
+    setUpArrays(arr, originalArr, handScore, 3);
+    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
+    sortCardNumber(arr, HAND_SIZE);
 
     bool tripsPresent = false, pairPresent = false;
     // Finds if trips are present
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < HAND_SIZE-2; i++)
     {
         if (arr[i].number == arr[i+1].number && arr[i].number == arr[i+2].number)
         {
@@ -1302,10 +1280,10 @@ int* fullHouse(const struct Card originalArr[])
     {
         // Removes trips so trips arent confused as pairs
         changeCardValue(arr, handScore[1], -100);
-        sortCardNumber(arr, 7);
+        sortCardNumber(arr, HAND_SIZE);
         
         // Checks for a pair
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < HAND_SIZE-4; i++)
         {
             if (arr[i].number == arr[i+1].number)
             {
@@ -1317,10 +1295,10 @@ int* fullHouse(const struct Card originalArr[])
     }
 
     if (pairPresent && tripsPresent)
-        handScore[0] = 1;
+        handScore[0] = TRUTH_VALUE;
 
-    /* handScore[0] = wether or not there is a full house, handScore[1] = high card of trips,
-    handScore[2] = high card of pair */
+    /* handScore[0] = wether or not there is a full house (TRUTH_VALUE = true, 0 = false), 
+    handScore[1] = high card of trips, handScore[2] = high card of pair */
     return handScore;
 }
 
@@ -1328,39 +1306,33 @@ int* fullHouse(const struct Card originalArr[])
 int* quads(const struct Card originalArr[])
 {
     static int handScore[3];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 3; i++)
-        handScore[i]= 0;
-
-    // Copies to 'arr', so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
-
-    changeCardValue(arr, 1, 14);
-    sortCardNumber(arr, 7);
+    setUpArrays(arr, originalArr, handScore, 3);
+    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
+    sortCardNumber(arr, HAND_SIZE);
 
     // Checks if there are quads present
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < HAND_SIZE-3; i++)
     {
         if (arr[i].number == arr[i+1].number && arr[i].number == arr[i+2].number &&
             arr[i].number == arr[i+3].number)
         {
-            handScore[0] = 1;
+            handScore[0] = TRUTH_VALUE;
             handScore[1] = arr[i].number;
         }
     }
 
     // If quads are present, the kicker is added
-    if (handScore[0] == 1)
+    if (handScore[0] == TRUTH_VALUE)
     {
         changeCardValue(arr, handScore[1], -1);
-        sortCardNumber(arr, 7);
+        sortCardNumber(arr, HAND_SIZE);
         handScore[2] = arr[0].number;
     }
 
-    // handScore[0] = wether or not there are quads, handScore[1] = high card of quads, handScore[2] = kicker
+    /* handScore[0] = wether or not there are quads (TRUTH_VALUE = true, 0 = false), 
+    handScore[1] = high card of quads, handScore[2] = kicker */
     return handScore;
 }
 
@@ -1368,24 +1340,18 @@ int* quads(const struct Card originalArr[])
 int* straightflush(const struct Card originalArr[])
 {
     static int handScore[2];
-    Card arr[7];
+    Card arr[HAND_SIZE];
 
-    // Resets handScore array to values of 0
-    for (int i = 0; i < 2; i++)
-        handScore[i]= 0;
-
-    // Copies to 'arr', so 'originalArr' doesn't change
-    for (int i = 0; i < 7; i++)
-        arr[i] = originalArr[i];
+    setUpArrays(arr, originalArr, handScore, 2);
 
     int* flushPtr = flush(arr);
     bool flushPresent = false;
     // Checks for a flush
-    if (flushPtr[0] == 1)
+    if (flushPtr[0] == TRUTH_VALUE)
     {
         flushPresent = true;
         // If a card suit is not corresponding to the flush it is removed to prevent interference with algorithm
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < HAND_SIZE; i++)
         {
             if (flushPtr[6] != arr[i].suit)
             {
@@ -1401,7 +1367,7 @@ int* straightflush(const struct Card originalArr[])
     {
         int* straightPtr = straight(arr);
 
-        if (straightPtr[0] == 1)
+        if (straightPtr[0] == TRUTH_VALUE)
         {
             handScore[1] = straightPtr[1];
             straightPresent = true;
@@ -1409,8 +1375,9 @@ int* straightflush(const struct Card originalArr[])
     }
 
     if (straightPresent && flushPresent)
-        handScore[0] = 1;
+        handScore[0] = TRUTH_VALUE;
 
-    // handScore[0] = wether or not there is a straightflush, handScore[1] = high card of straightflush
+    /* handScore[0] = wether or not there is a straightflush (TRUTH_VALUE = true, 0 = false), 
+    handScore[1] = high card of straightflush */
     return handScore;
 }
