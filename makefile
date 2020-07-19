@@ -2,7 +2,7 @@ poker: poker.o dealer.o userInterface.o speedDealing.o
 	g++ -o poker poker.o dealer.o userInterface.o speedDealing.o
 
 poker.o: poker.cpp dealer.h userInterface.h
-	g++ -c poker.cpp
+	g++ -c poker.cpp -std=c++0x
 
 dealer.o: dealer.cpp dealer.h
 	g++ -c dealer.cpp -std=c++0x

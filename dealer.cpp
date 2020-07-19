@@ -56,6 +56,8 @@ Player* Dealer::getPossibleWinnerArray() const
 void Dealer::generateShuffledDeck()
 {   
     std::mt19937 randomNumberGenerator(random());
+    const int DECK_SIZE = 52;
+    const int NUMBER_OF_SHUFFLES = 2;
     int deckIndexCounter = 0;
 
     // Generates 52 card deck
@@ -70,13 +72,16 @@ void Dealer::generateShuffledDeck()
     }
 
     // Shuffles the deck array
-    for (int i = 0; i < 52; i++)
+    for (int i = 0; i < NUMBER_OF_SHUFFLES; i++)
     {
-        int randomIndex = randomNumberGenerator() % 52;
-        Card hold = deck[i];
-        deck[i] = deck[randomIndex];
-        deck[randomIndex] = hold;
-    }
+        for (int j = 0; j < DECK_SIZE; j++)
+        {
+            int randomIndex = randomNumberGenerator() % DECK_SIZE;
+            Card hold = deck[j];
+            deck[j] = deck[randomIndex];
+            deck[randomIndex] = hold;
+        }
+    }  
 }
 
 // Populates specific arrays based on game version
