@@ -25,13 +25,14 @@ public:
 class Dealer
 {
 public:
-    Dealer(int p);
-    ~Dealer();
+    Dealer();
+    void deallocate();
     int getLoopRequirement() const;
     int getPossibleWinnerIndex() const;
     int getCardIndex() const;
     Card* getSevenCardHand();
     Player* getPossibleWinnerArray() const;
+    void setPlayers(int p);
     void generateShuffledDeck();
     void populateHand(bool sevenCardGame);
     void evaluatePlayerHands(bool sevenCardGame);

@@ -7,16 +7,16 @@ const int Dealer::HAND_SIZE = 7;
 const int Dealer::LOW_ACE_VALUE = 1;
 const int Dealer::HIGH_ACE_VALUE = 14;
 
-Dealer::Dealer(int p) : cardIndex(0), players(p), possibleWinnerIndex(-1)
-{
-    playerCards = new Card[p*2]();
-    fiveCardHand = new Card[p*5]();
-    possibleWinner = new Player[p]();
-}
+Dealer::Dealer() : cardIndex(0), players(0), possibleWinnerIndex(-1)
+{}
 
-Dealer::~Dealer()
+// Resets and deallocates all variables and memory every loop
+void Dealer::deallocate()
 {
-    // Deallocates memory
+    cardIndex = 0;
+    players = 0;
+    possibleWinnerIndex = -1;
+
     delete [] playerCards;
     playerCards = 0;
 
@@ -50,6 +50,15 @@ Card* Dealer::getSevenCardHand()
 Player* Dealer::getPossibleWinnerArray() const
 {
     return possibleWinner;
+}
+
+void Dealer::setPlayers(int p)
+{
+    players = p;
+    // Intializes dynamic arrays based on number of players
+    playerCards = new Card[p*2]();
+    fiveCardHand = new Card[p*5]();
+    possibleWinner = new Player[p]();
 }
 
 // Generates and shuffles a deck based on numbers

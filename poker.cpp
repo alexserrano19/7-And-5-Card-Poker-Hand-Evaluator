@@ -7,11 +7,10 @@
 
 int main()
 {
-    ////////// DECLARATION
     UserInterface UI;
     SpeedDealing speed;
+    Dealer dealer;
     bool sevenCardGame = false;
-    ////////// END DECLARATION
 
     UI.printGameBanner();
     UI.selectFirstMenuOption();
@@ -40,13 +39,9 @@ int main()
         {
             case '1':
             {
-                ////////// DECLARATION
-                Dealer dealer(UI.numberPlayersPerGame(sevenCardGame, speed.getContinuousLoopOn(), speed.getPlayersPerLoop()));
-                ////////// END DECLARATION
-                
+                dealer.setPlayers(UI.numberPlayersPerGame(sevenCardGame, speed.getContinuousLoopOn(), speed.getPlayersPerLoop()));
                 dealer.generateShuffledDeck();
                 dealer.populateHand(sevenCardGame);
-
                 UI.printHandBanner();
 
                 // Determines hand strength of every player in a game
@@ -60,7 +55,8 @@ int main()
                 // Determines winner if not in continuous loop or if output is desired
                 if (speed.getCheckForWinner())
                     UI.winningHandOutput(dealer.determineWinner());
-                
+
+                dealer.deallocate();
                 break;
             }
             case '2':
