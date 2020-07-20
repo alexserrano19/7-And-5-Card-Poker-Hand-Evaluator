@@ -796,7 +796,7 @@ std::vector<int> Dealer::determineWinner()
 // Returns the player numbers that tied
 std::vector<int> Dealer::multipleWinners(const Player arr[], const int sizeOfVector)
 {
-    std::vector<int> winners(sizeOfVector);
+    std::vector<int> winners;
 
     for (int i = 0; i < sizeOfVector; i++)
         winners.push_back(arr[i].playerNumber);
