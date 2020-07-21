@@ -7,12 +7,12 @@ playersPerContinuousLoop(0), outputGames(0), duration(0), tempDuration(0),
 numberOfLoops(0), continuousLoopingRequirement(0)
 {}
 
-bool SpeedDealing::getContinuousLoopOn() const
+bool SpeedDealing::getContinuousLoopOnBool() const
 {
     return continuousLoopOn;
 }
 
-bool SpeedDealing::getCheckForWinner() const
+bool SpeedDealing::getCheckForWinnerBool() const
 {
     return checkForWinner;
 }
@@ -22,7 +22,7 @@ int SpeedDealing::getPlayersPerLoop() const
     return playersPerContinuousLoop;
 }
 
-void SpeedDealing::setCheckForWinner(bool w)
+void SpeedDealing::setCheckForWinnerBool(bool w)
 {
     this->checkForWinner = w;
 }

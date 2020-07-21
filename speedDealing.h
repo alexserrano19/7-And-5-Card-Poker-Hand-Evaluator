@@ -9,10 +9,10 @@ class SpeedDealing
 {
 public:
     SpeedDealing();
-    bool getContinuousLoopOn() const;
-    bool getCheckForWinner() const;
+    bool getContinuousLoopOnBool() const;
+    bool getCheckForWinnerBool() const;
     int getPlayersPerLoop() const;
-    void setCheckForWinner(bool w);
+    void setCheckForWinnerBool(bool w);
     void processLoadingTime();
     void speedDealingOption(UserInterface ui, bool sevenCardGame);
     void handleFinalContinuousLoop();

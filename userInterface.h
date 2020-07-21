@@ -9,7 +9,9 @@ public:
     UserInterface();
     char getFirstSelection() const;
     char getSecondSelection() const;
+    bool getSevenCardGameBool() const;
     void setSecondSelection(char s);
+    void setSevenCardGameBool(bool s);
     void printGameBanner() const;
     void printHandBanner() const;
     void printByeMessage() const;
@@ -23,8 +25,8 @@ public:
 
 private:
     unsigned long long int statsArray[10];
-    char firstSelection;
-    char secondSelection;
+    char firstSelection, secondSelection;
+    bool sevenCardGame;
 
     int selectPlayers5game(std::string question);
     int selectPlayers7game(std::string question);

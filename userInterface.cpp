@@ -7,6 +7,7 @@ const int UserInterface::HIGH_ACE_VALUE = 14;
 
 UserInterface::UserInterface()
 {
+    sevenCardGame = false;
     // Initalizes statsArray to values of 0
     for (unsigned long long int& element : statsArray)
         element = 0;
@@ -22,9 +23,19 @@ char UserInterface::getSecondSelection() const
     return secondSelection;
 }
 
+bool UserInterface::getSevenCardGameBool() const
+{
+    return sevenCardGame;
+}
+
 void UserInterface::setSecondSelection(char s)
 {
     secondSelection = s;
+}
+
+void UserInterface::setSevenCardGameBool(bool s)
+{
+    sevenCardGame = s;
 }
 
 void UserInterface::printGameBanner() const

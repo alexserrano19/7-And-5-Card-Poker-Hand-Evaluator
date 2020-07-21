@@ -7,27 +7,26 @@
 
 int main()
 {
+    Dealer dealer;
     UserInterface UI;
     SpeedDealing speed;
-    Dealer dealer;
-    bool sevenCardGame = false;
 
     UI.printGameBanner();
     UI.selectFirstMenuOption();
 
     switch (UI.getFirstSelection())
     {
-        case '5': sevenCardGame = false; break;
-        case '7': sevenCardGame = true; break;
+        case '5': UI.setSevenCardGameBool(false); break;
+        case '7': UI.setSevenCardGameBool(true); break;
         default: UI.printByeMessage(); return 0;
     }
 
     do 
     {
-        if (!speed.getContinuousLoopOn())
+        if (!speed.getContinuousLoopOnBool())
         {
-            UI.selectSecondMenuOption(sevenCardGame);
-            speed.setCheckForWinner(true);
+            UI.selectSecondMenuOption(UI.getSevenCardGameBool());
+            speed.setCheckForWinnerBool(true);
         }
         else
         {
@@ -39,29 +38,30 @@ int main()
         {
             case '1':
             {
-                dealer.setPlayers(UI.numberPlayersPerGame(sevenCardGame, speed.getContinuousLoopOn(), speed.getPlayersPerLoop()));
+                dealer.setPlayers(UI.numberPlayersPerGame(UI.getSevenCardGameBool(), 
+                                    speed.getContinuousLoopOnBool(), speed.getPlayersPerLoop()));
                 dealer.generateShuffledDeck();
-                dealer.populateHand(sevenCardGame);
+                dealer.populateCardArrays(UI.getSevenCardGameBool());
                 UI.printHandBanner();
 
                 // Determines hand strength of every player in a game
                 while(dealer.getCardIndex() < dealer.getLoopRequirement())
                 {
-                    dealer.evaluatePlayerHands(sevenCardGame);
+                    dealer.evaluatePlayerHand(UI.getSevenCardGameBool());
                     UI.processPlayerHand(dealer.getSevenCardHand(), dealer.getPossibleWinnerArray(), 
-                                            dealer.getPossibleWinnerIndex(), sevenCardGame);
+                                            dealer.getPossibleWinnerIndex(), UI.getSevenCardGameBool());
                 }
                 
                 // Determines winner if not in continuous loop or if output is desired
-                if (speed.getCheckForWinner())
+                if (speed.getCheckForWinnerBool())
                     UI.winningHandOutput(dealer.determineWinner());
 
-                dealer.deallocate();
+                dealer.deallocateMemoryAndResetMembers();
                 break;
             }
             case '2':
             {
-                speed.speedDealingOption(UI, sevenCardGame);
+                speed.speedDealingOption(UI, UI.getSevenCardGameBool());
                 break;
             }
             case '3':

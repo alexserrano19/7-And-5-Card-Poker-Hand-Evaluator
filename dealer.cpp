@@ -11,8 +11,9 @@ Dealer::Dealer() : cardIndex(0), players(0), possibleWinnerIndex(-1)
 {}
 
 // Resets and deallocates all variables and memory every loop
-void Dealer::deallocate()
+void Dealer::deallocateMemoryAndResetMembers()
 {
+    // Resets values for new loop
     cardIndex = 0;
     players = 0;
     possibleWinnerIndex = -1;
@@ -94,7 +95,7 @@ void Dealer::generateShuffledDeck()
 }
 
 // Populates specific arrays based on game version
-void Dealer::populateHand(bool sevenCardGame)
+void Dealer::populateCardArrays(bool sevenCardGame)
 {
     if (sevenCardGame)
     {
@@ -114,7 +115,7 @@ void Dealer::populateHand(bool sevenCardGame)
 }
 
 // Determines hand strength for each hand
-void Dealer::evaluatePlayerHands(bool sevenCardGame)
+void Dealer::evaluatePlayerHand(bool sevenCardGame)
 {
     int* highCardPtr = 0, *pairPtr = 0, *twoPairPtr = 0, *tripsPtr = 0, *straightPtr = 0;
     int* flushPtr = 0, *fullHousePtr = 0, *quadsPtr = 0, *straightFlushPtr = 0;

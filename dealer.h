@@ -26,7 +26,7 @@ class Dealer
 {
 public:
     Dealer();
-    void deallocate();
+    void deallocateMemoryAndResetMembers();
     int getLoopRequirement() const;
     int getPossibleWinnerIndex() const;
     int getCardIndex() const;
@@ -34,8 +34,8 @@ public:
     Player* getPossibleWinnerArray() const;
     void setPlayers(int p);
     void generateShuffledDeck();
-    void populateHand(bool sevenCardGame);
-    void evaluatePlayerHands(bool sevenCardGame);
+    void populateCardArrays(bool sevenCardGame);
+    void evaluatePlayerHand(bool sevenCardGame);
     std::vector<int> determineWinner();
     // Global variables in dealer class
     static const int TRUTH_VALUE;
