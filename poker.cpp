@@ -1,8 +1,6 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
-
-#include "userInterface.h"
 #include "speedDealing.h"
 
 int main()
