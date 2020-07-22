@@ -193,10 +193,10 @@ void UserInterface::processCardInfo(const Card arr[], const Player playerArr[], 
         std::string handInfo = " * ";
         switch(arr[i].number)
         {
-            case 1: handInfo += "Ace"; break;
             case 11: handInfo += "Jack"; break;
             case 12: handInfo += "Queen"; break;
             case 13: handInfo += "King"; break;
+            case 14: case 1: handInfo += "Ace"; break;
             default: handInfo += std::to_string(arr[i].number);
         }
         handInfo += " of ";

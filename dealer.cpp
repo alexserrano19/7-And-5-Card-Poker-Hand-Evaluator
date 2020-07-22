@@ -71,7 +71,7 @@ void Dealer::generateShuffledDeck()
     int deckIndexCounter = 0;
 
     // Generates 52 card deck
-    for (int i = 0; i < 13; i++)
+    for (int i = 1; i < 14; i++)
     {
         for (int j = 0; j < 4; j++)
         {
@@ -236,7 +236,6 @@ int* Dealer::highCard(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 5);
-    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
     sortCardNumber(arr, HAND_SIZE);
 
     // Copies 5 highest cards into handScore array
@@ -253,7 +252,6 @@ int* Dealer::pair(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 5);
-    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
     sortCardNumber(arr, HAND_SIZE);
 
     // Finds the card number of the pair
@@ -288,7 +286,6 @@ int* Dealer::twoPair(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 4);
-    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
     sortCardNumber(arr, HAND_SIZE);
 
     bool checkSecondPair = false;
@@ -331,7 +328,6 @@ int* Dealer::trips(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 4);
-    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
     sortCardNumber(arr, HAND_SIZE);
 
     // Finds if trips are present and sets value
@@ -365,12 +361,17 @@ int* Dealer::straight(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 2);
+    changeCardValue(arr, HIGH_ACE_VALUE, LOW_ACE_VALUE);
     sortCardNumber(arr, HAND_SIZE);
 
+    bool ace = false;
     int counter = 0;
     // Sets all but one of any repeated cards as -1, to not interfer with following algorithm
     for (int i = 0; i < HAND_SIZE-counter; i++)
     {
+        if (arr[i].number == LOW_ACE_VALUE)
+            ace = true;
+
         if (arr[i].number == arr[i+1].number)
         {
             arr[i] = {-1, -1};
@@ -380,16 +381,10 @@ int* Dealer::straight(const Card originalArr[])
         }
     }
 
-    sortCardNumber(arr, HAND_SIZE);
-    
-    bool ace = false;
+    counter = 0;
     // Determines if there is a straight taking into account the ace as number 1 and 14
     do
     {
-        // If ace is present algorithm will check for ace high straight
-        if (ace)
-            sortCardNumber(arr, HAND_SIZE);
-
         // Checks for straight
         for (int i = 0; i < HAND_SIZE-4; i++)
         {
@@ -402,21 +397,13 @@ int* Dealer::straight(const Card originalArr[])
             }
         }
 
-        // Exits loop after checking for a straight with an ace
         if (ace)
-            break;
-
-        // Checks if ace is present
-        if (!ace)
         {
-            for (int i = 0; i < HAND_SIZE; i++)
-            {
-                if (arr[i].number == LOW_ACE_VALUE)
-                {
-                    arr[i].number = HIGH_ACE_VALUE;
-                    ace = true;
-                }
-            }
+            counter++;
+            if (counter > 1)
+                break;
+            changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
+            sortCardNumber(arr, HAND_SIZE);
         }
 
     } while (ace);
@@ -451,7 +438,6 @@ int* Dealer::flush(const Card originalArr[])
     if (counter1 < 5 && counter2 < 5 && counter3 < 5 && counter4 < 5)
         return handScore;
 
-    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
     sortCardNumber(arr, HAND_SIZE);
 
     // Finds card numbers and suit corresponding to flush
@@ -492,7 +478,6 @@ int* Dealer::fullHouse(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 3);
-    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
     sortCardNumber(arr, HAND_SIZE);
 
     bool tripsPresent = false, pairPresent = false;
@@ -539,7 +524,6 @@ int* Dealer::quads(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 3);
-    changeCardValue(arr, LOW_ACE_VALUE, HIGH_ACE_VALUE);
     sortCardNumber(arr, HAND_SIZE);
 
     // Checks if there are quads present
