@@ -46,7 +46,7 @@ int main()
                 while(dealer.getCardIndex() < dealer.getLoopRequirement())
                 {
                     dealer.evaluatePlayerHand(UI.getSevenCardGameBool());
-                    UI.processPlayerHand(dealer.getSevenCardHand(), dealer.getPossibleWinnerArray(), 
+                    UI.processPlayerHand(dealer.getPrintableHand(), dealer.getPossibleWinnerArray(), 
                                             dealer.getPossibleWinnerIndex(), UI.getSevenCardGameBool());
                 }
                 

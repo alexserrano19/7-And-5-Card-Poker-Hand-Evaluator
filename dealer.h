@@ -30,7 +30,7 @@ public:
     int getLoopRequirement() const;
     int getPossibleWinnerIndex() const;
     int getCardIndex() const;
-    Card* getSevenCardHand();
+    Card* getPrintableHand();
     Player* getPossibleWinnerArray() const;
     void setPlayers(int p);
     void generateShuffledDeck();
@@ -45,12 +45,13 @@ public:
     
 private:
     int players, loopRequirement, cardIndex, possibleWinnerIndex;
-    Card deck[52], sevenCardHand[7], communityCards[5];
+    Card deck[52], sevenCardHand[7], communityCards[5], printable[7];
     Card* playerCards;
     Card* fiveCardHand;
     Player* possibleWinner;
-    // Random number generation
-    std::random_device random;
+    // Used for random number generation
+    std::random_device rd;
+    std::mt19937 randomNumberGenerator;
 
     // Used to determine hand strength
     int* highCard(const Card originalArr[]);
@@ -61,9 +62,8 @@ private:
     int* flush(const Card originalArr[]);
     int* fullHouse(const Card originalArr[]);
     int* quads(const Card originalArr[]);
-    int* straightflush(const Card originalArr[]);
-    void sortCardNumber(Card arr[], int sizeOfArray);
-    void changeCardValue(Card arr[], int valueCompared, int newValue);
+    int* straightflush(const Card originalArr[], int* flushPtr);
+    void sortCardNumber(Card arr[]);
     void setUpArrays(Card arr[], const Card originalArr[], int handScore[], int sizeHandScore);
 
     // Used to determine winner amongst all other player hands
