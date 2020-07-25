@@ -17,7 +17,8 @@ public:
     void printByeMessage() const;
     void selectFirstMenuOption();
     void selectSecondMenuOption(bool sevenCardGame);
-    int numberPlayersPerGame(bool sevenCardGame, bool continuousLoopOn, int playersPerContinuousLoop);
+    int numberPlayersPerGame(bool sevenCardGame, bool continuousLoopOn, 
+                            int playersPerContinuousLoop, bool speedDealingOn = false);
     void processPlayerHand(const Card arr[], const Player playerArr[], int index, bool setStats);
     void processStatistics(char menuSelection);
     void winningHandOutput(std::vector<int> winners) const;

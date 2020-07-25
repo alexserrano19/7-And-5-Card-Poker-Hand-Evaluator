@@ -11,7 +11,8 @@ const int Dealer::HIGH_ACE_VALUE = 14;
 Dealer::Dealer() : cardIndex(0), players(0), possibleWinnerIndex(-1), randomNumberGenerator(rd())
 {}
 
-// Resets and deallocates all variables and memory every loop
+// Deallocates all memory and resets variables
+// Deallocation upon game ending, not object destruction
 void Dealer::deallocateMemoryAndResetMembers()
 {
     // Resets values for new loop
@@ -67,7 +68,8 @@ void Dealer::setPlayers(int p)
 void Dealer::generateShuffledDeck()
 {   
     int deckIndexCounter = 0;
-    // Generates 52 card deck
+    // Generates 52 card deck with numbers and corresponding suits
+    // Number range: 2-14, Suit range: 1-4
     for (int i = 1; i < 14; i++)
     {
         for (int j = 0; j < 4; j++)
@@ -96,6 +98,7 @@ void Dealer::generateShuffledDeck()
 // Populates specific arrays based on game version
 void Dealer::populateCardArrays(bool sevenCardGame)
 {
+    // 7/5 hand games use different arrays
     if (sevenCardGame)
     {
         for (int i = 0; i < HAND_SIZE-2; i++)
@@ -116,8 +119,6 @@ void Dealer::populateCardArrays(bool sevenCardGame)
 // Determines hand strength for each hand
 void Dealer::evaluatePlayerHand(bool sevenCardGame)
 {
-    possibleWinnerIndex++;
-
     if (sevenCardGame)
     {
         // Copies the community cards into sevenCardHand array
@@ -139,6 +140,7 @@ void Dealer::evaluatePlayerHand(bool sevenCardGame)
             sevenCardHand[i] = fiveCardHand[cardIndex];
             cardIndex++;
         }
+        // Last 2 card should be obsolete in 5 card game
         sevenCardHand[5] = {-5, -5};
         sevenCardHand[6] = {-10, -10};
     }
@@ -150,19 +152,27 @@ void Dealer::evaluatePlayerHand(bool sevenCardGame)
     // Sorts sevenCardHand since every hand strength function needs this to work properly
     sortCardNumber(sevenCardHand);
 
+    // Used for possibleWinner array, to save all player hand strengths
+    possibleWinnerIndex++;
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     /* The following functions determine the hand strength, with values returned as pointers, the
     values in each index are specified at the end of every hand strength function definition */
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    int* highCardPtr = 0, *pairPtr = 0, *twoPairPtr = 0, *tripsPtr = 0, *straightPtr = 0;
-    int* flushPtr = 0, *fullHousePtr = 0, *quadsPtr = 0, *straightFlushPtr = 0;
+    typedef int* PointerToInt;
+    PointerToInt highCardPtr = 0, pairPtr = 0, twoPairPtr = 0, tripsPtr = 0, straightPtr = 0;
+    PointerToInt flushPtr = 0, fullHousePtr = 0, quadsPtr = 0, straightFlushPtr = 0;
 
     // The flush function is used first since it is used in the straightflush function
     flushPtr = flush(sevenCardHand);
-
     straightFlushPtr = straightflush(sevenCardHand, flushPtr);
-    if (straightFlushPtr[0] == TRUTH_VALUE)
+    if (straightFlushPtr[0] == TRUTH_VALUE && straightFlushPtr[1] == HIGH_ACE_VALUE)
+    {
+        setStats(possibleWinner, possibleWinnerIndex, 210, straightFlushPtr[1], 0, 0, 0, 0);
+        return;
+    }
+    else if (straightFlushPtr[0] == TRUTH_VALUE)
     {
         setStats(possibleWinner, possibleWinnerIndex, 200, straightFlushPtr[1], 0, 0, 0, 0);
         return;
@@ -224,7 +234,7 @@ void Dealer::evaluatePlayerHand(bool sevenCardGame)
     }
 }
 
-// Sets the stats of the player hands into a Player array
+// Sets the stats of the player hands into possibleWinner array
 void Dealer::setStats(Player arr[], int index, int points, int highCard, int k1, int k2, int k3, int k4)
 {
     arr[index].playerNumber = index+1;
@@ -236,10 +246,9 @@ void Dealer::setStats(Player arr[], int index, int points, int highCard, int k1,
     arr[index].kicker4 = k4;
 }
 
-///////////////////////////////////// HAND STRENGTH FUNCTIONS /////////////////////////////////////
+///////////////////////////////// HAND STRENGTH FUNCTIONS /////////////////////////////////
 /* The following functions will return a pointer as an array that returns several values to 
 determine serveral factors, which are mentioned specifically at the end of each function */
-/* Remember: Aces can act as the number 1 and 14 */
 
 int* Dealer::highCard(const Card originalArr[])
 {
@@ -263,7 +272,7 @@ int* Dealer::pair(const Card originalArr[])
 
     setUpArrays(arr, originalArr, handScore, 5);
 
-    // Finds the card number of the pair
+    // Finds is single pair is present
     for (int i = 0; i < HAND_SIZE-1; i++)
     {
         if (arr[i].number == arr[i+1].number)
@@ -297,8 +306,8 @@ int* Dealer::pair(const Card originalArr[])
         }
     }
 
-    /* handScore[0] = wether or not there is a single pair (TRUTH_VALUE = true, 0 = false), handScore[1] = high card of single pair, 
-    handScore[2] = first kicker handScore[3] = second kicker, handScore[4] = last kicker */
+    /* handScore[0] = wether or not there is a single pair (TRUTH_VALUE = true, 0 = false), 
+    handScore[1] = high card of single pair, handScore[2-4] = all kickers */
     return handScore;
 }
 
@@ -308,9 +317,9 @@ int* Dealer::twoPair(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 4);
-    
+
+    // Finds if two pairs are present
     bool checkSecondPair = false;
-    // Finds two pairs and sets their values
     for (int i = 0; i < HAND_SIZE-1; i++)
     {
         if (arr[i].number == arr[i+1].number)
@@ -353,7 +362,7 @@ int* Dealer::trips(const Card originalArr[])
 
     setUpArrays(arr, originalArr, handScore, 4);
 
-    // Finds if trips are present and sets value
+    // Finds if trips are present
     for (int i = 0; i < HAND_SIZE-2; i++)
     {
         if (arr[i].number == arr[i+1].number && arr[i].number == arr[i+2].number)
@@ -391,8 +400,8 @@ int* Dealer::straight(const Card originalArr[])
 
     setUpArrays(arr, originalArr, handScore, 2);
 
-    bool shouldItSort = false;
     // Sets all but one of any repeated cards as -1, to not interfer with following algorithm
+    bool shouldItSort = false;
     for (int i = 0; i < HAND_SIZE-1; i++)
     {
         if (arr[i].number == arr[i+1].number)
@@ -416,18 +425,12 @@ int* Dealer::straight(const Card originalArr[])
             return handScore;
         }
     }
-
-    // Checks for ace, ace would only be in the beginning
-    bool ace = false;
+    
+    // Checks for lowest possible straight Ace -> 5 if ace is present
     if (arr[0].number == HIGH_ACE_VALUE)
-        ace = true;
-
-    // Checks for lowest straight if ace is present
-    if (ace)
     {
-        for (int i = 0; i < HAND_SIZE-3; i++)
+        for (int i = 1; i < HAND_SIZE-3; i++)
         {
-            // Checks for lowest possible straight Ace -> 5
             if (arr[i].number == 5 && arr[i+1].number == 4 
                 && arr[i+2].number == 3 && arr[i+3].number == 2)
             {
@@ -448,9 +451,9 @@ int* Dealer::flush(const Card originalArr[])
     Card arr[HAND_SIZE];
 
     setUpArrays(arr, originalArr, handScore, 7);
-    
+
+    // Counts how many of each suit there are
     int suit1 = 0, suit2 = 0, suit3 = 0, suit4 = 0;
-    // Finds how many of each suit there are
     for (int i = 0; i < HAND_SIZE; i++)
     {
         switch(arr[i].suit)
@@ -466,6 +469,7 @@ int* Dealer::flush(const Card originalArr[])
     if (suit1 < 5 && suit2 < 5 && suit3 < 5 && suit4 < 5)
         return handScore;
 
+    // Sets the suit value
     if (suit1 >= 5)
         handScore[6] = 1;
     else if (suit2 >= 5)
@@ -478,8 +482,8 @@ int* Dealer::flush(const Card originalArr[])
     // Sets flush to true
     handScore[0] = TRUTH_VALUE;
     
-    int indexCounter = 0;
     // Sets the high card and kickers
+    int indexCounter = 0;
     for (int i = 0; i < HAND_SIZE; i++)
     {
         if (arr[i].suit == handScore[6])
@@ -593,7 +597,7 @@ int* Dealer::straightflush(const Card originalArr[], int* flushPtr)
     return handScore;
 }
 
-// Sorts array from highest card number to lowest card number regardless of suit
+// Sorts array from highest card number to lowest card number
 void Dealer::sortCardNumber(Card arr[])
 {
     for (int i = 0; i < HAND_SIZE-1; i++)

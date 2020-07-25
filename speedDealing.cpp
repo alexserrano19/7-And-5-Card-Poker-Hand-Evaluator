@@ -24,7 +24,7 @@ int SpeedDealing::getPlayersPerLoop() const
 
 void SpeedDealing::setCheckForWinnerBool(bool w)
 {
-    this->checkForWinner = w;
+    checkForWinner = w;
 }
 
 // Handles loading times and output activation/deactivation
@@ -32,7 +32,8 @@ void SpeedDealing::processLoadingTime()
 {
     if (numberOfLoops == 0)
     {
-        startTimer = std::chrono::high_resolution_clock::now();
+        // Holds timestamp of when speed dealing starts
+        time1 = std::chrono::high_resolution_clock::now();
         std::clog << "\n\n\nLOADING...\n\n\n";
         // Deactivates cout output until looping is over
         std::cout.rdbuf(NULL);
@@ -43,8 +44,9 @@ void SpeedDealing::processLoadingTime()
         std::cout.rdbuf(orig_buf);
         checkForWinner = true;
     }
-    stopTimer = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::seconds>(stopTimer - startTimer).count();
+    time2 = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::seconds>(time2 - time1).count();
+    // Outputs loading time every 5 seconds, with stats of the hands evalauted
     if (duration % 5 == 0 && duration > tempDuration)
     {
         tempDuration = duration;
@@ -78,7 +80,7 @@ void SpeedDealing::speedDealingOption(UserInterface ui, bool sevenCardGame)
 
     } while (continuousLoopingRequirement < 2);
 
-    playersPerContinuousLoop = ui.numberPlayersPerGame(sevenCardGame, false, 0);
+    playersPerContinuousLoop = ui.numberPlayersPerGame(sevenCardGame, false, 0, true);
     
     std::cout << "\nFor how many games will you like player hand output?\n" << ">>> ";
 
@@ -98,8 +100,9 @@ void SpeedDealing::handleFinalContinuousLoop()
     {
         if (outputGames >= 0)
         {
+            // Calculates final loading itme
             std::clog << "FINISHED LOADING!\n";
-            duration = std::chrono::duration_cast<std::chrono::microseconds>(stopTimer - startTimer).count();
+            duration = std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count();
             int wholeSecond = duration/1000000;
             std::clog << "Total loading time: " << wholeSecond << "." << duration-(wholeSecond*1000000) << " seconds\n\n\n";
         }

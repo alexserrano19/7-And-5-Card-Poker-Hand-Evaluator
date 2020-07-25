@@ -24,7 +24,7 @@ private:
     unsigned long long int numberOfLoops;
     unsigned long long int continuousLoopingRequirement;
     // Used for timer
-    std::chrono::high_resolution_clock::time_point startTimer, stopTimer;
+    std::chrono::high_resolution_clock::time_point time1, time2;
     // Used to activate/deactivate 'cout' statements 
     std::streambuf* orig_buf = std::cout.rdbuf();
 };

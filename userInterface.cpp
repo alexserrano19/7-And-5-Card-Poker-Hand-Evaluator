@@ -61,7 +61,7 @@ void UserInterface::printByeMessage() const
     std::cout << "  <<****************************>>\n\n";
 }
 
-// Returns first menu option
+// Returns and error checks first menu option
 void UserInterface::selectFirstMenuOption()
 {
     std::cout << "\nMeNuMeNu%%%===========%%%MeNuMeNu\n";
@@ -84,7 +84,7 @@ void UserInterface::selectFirstMenuOption()
     }
 }
 
-// Returns second menu option
+// Returns and error checks second menu option
 void UserInterface::selectSecondMenuOption(bool sevenCardGame)
 {
     std::cout << "\nMeNuMeNu%%%========%%%MeNuMeNu\n";
@@ -113,18 +113,29 @@ void UserInterface::selectSecondMenuOption(bool sevenCardGame)
     }
 }
 
-// Returns number of players in a game type
-int UserInterface::numberPlayersPerGame(bool sevenCardGame, bool continuousLoopOn, int playersPerContinuousLoop)
+// Returns number of players depedngind on game time and menu option
+int UserInterface::numberPlayersPerGame(bool sevenCardGame, bool continuousLoopOn, 
+                                        int playersPerContinuousLoop, bool speedDealingOn)
 {
     if (sevenCardGame && !continuousLoopOn)
-        return selectPlayers7game("How many players will you like to deals cards to?");
+    {
+        if (speedDealingOn)
+            return selectPlayers7game("How many players will you like to deal cards to in each game?");
+        else
+            return selectPlayers7game("How many players will you like to deal cards to?");
+    }
     else if (!sevenCardGame && !continuousLoopOn)
-        return selectPlayers5game("How many players will you like to deals cards to?");
+    {
+        if (speedDealingOn)
+            return selectPlayers5game("How many players will you like to deal cards to in each game?");
+        else
+            return selectPlayers5game("How many players will you like to deal cards to?");
+    }
     else
         return playersPerContinuousLoop;
 }
 
-// In seven player game, returns the amount of opponents that will be versed
+// In seven player game, returns and error checks the amount of opponents that will be versed
 int UserInterface::selectPlayers7game(std::string question)
 {
     int players = 0;
@@ -146,7 +157,7 @@ int UserInterface::selectPlayers7game(std::string question)
     return players;
 }
 
-// In five player game, returns the amount of opponents that will be versed
+// In five player game, returns and error checks the amount of opponents that will be versed
 int UserInterface::selectPlayers5game(std::string question)
 {
     int players = 0;
@@ -210,23 +221,13 @@ void UserInterface::processCardInfo(const Card arr[], const Player playerArr[], 
         std::cout << handInfo;
     }
 
-    // Sets the statistics of each hand strength
+    // Sets the statistics of each hand strength and ouptuts hand strength
     if (setStats)
     {
         switch(playerArr[index].points)
         {
-            case 200:
-                if (playerArr[index].highCard == HIGH_ACE_VALUE)
-                {
-                    std::cout << "\nHand strength: ROYAL FLUSH\n";
-                    statsArray[0] += 1;
-                }  
-                else
-                {
-                    std::cout << "\nHand strength: STRAIGHT FLUSH\n";
-                    statsArray[1] += 1;
-                }
-                break;
+            case 210: std::cout << "\nHand strength: ROYAL FLUSH\n"; statsArray[0] += 1; break;
+            case 200: std::cout << "\nHand strength: STRAIGHT FLUSH\n"; statsArray[1] += 1; break;
             case 190: std::cout << "\nHand strength: QUADS\n"; statsArray[2] += 1; break;
             case 180: std::cout << "\nHand strength: FULL HOUSE\n"; statsArray[3] += 1; break;
             case 170: std::cout << "\nHand strength: FLUSH\n"; statsArray[4] += 1; break;
@@ -283,7 +284,7 @@ void UserInterface::processStatistics(char menuSelection)
 }
 
 
-// Outputs winning hand(s)
+// Outputs winning hand(s) with fancy borders
 void UserInterface::winningHandOutput(std::vector<int> winners) const
 {
     if ((int)winners.size() > 1)
