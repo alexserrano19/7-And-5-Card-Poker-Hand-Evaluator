@@ -98,7 +98,7 @@ void Dealer::generateShuffledDeck()
 // Populates specific arrays based on game version
 void Dealer::populateCardArrays(bool sevenCardGame)
 {
-    // 7/5 hand games use different arrays
+    // 7/5 card games use different arrays
     if (sevenCardGame)
     {
         for (int i = 0; i < HAND_SIZE-2; i++)

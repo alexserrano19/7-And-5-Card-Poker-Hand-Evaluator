@@ -186,17 +186,17 @@ void UserInterface::processPlayerHand(const Card arr[], const Player playerArr[]
     if (sevenCardGame)
     {
         std::cout << "\nPLAYER HAND:"; 
-        processCardInfo(arr, playerArr, 5, 7, index, false);
+        processHandInfo(arr, playerArr, 5, 7, index, false);
         std::cout << "\nCOMMUNITY CARDS:\n" << " ";
     }
     else
         std::cout << "\nFIVE CARD HAND:"; 
 
-    processCardInfo(arr, playerArr, 0, 5, index, true);
+    processHandInfo(arr, playerArr, 0, 5, index, true);
 }
 
 // Prints and records strength of every hand
-void UserInterface::processCardInfo(const Card arr[], const Player playerArr[], int start, int end, int index, bool setStats)
+void UserInterface::processHandInfo(const Card arr[], const Player playerArr[], int start, int end, int index, bool setStats)
 {
     // Outputs each card
     for (int i = start; i < end; i++)
@@ -317,7 +317,7 @@ void UserInterface::winningHandOutput(std::vector<int> winners) const
 }
 
 // Dynamically grows border when players tie
-void UserInterface::dynamicallyGrowBorder(std::vector<int> v) const
+void UserInterface::dynamicallyGrowBorder(std::vector<int> v)
 {
     if ((v[0] <= 9 && v[1] >= 10) || (v[0] >= 10 && v[1] <= 9))
         std::cout << "-";

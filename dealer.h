@@ -53,25 +53,27 @@ private:
     std::random_device rd;
     std::mt19937 randomNumberGenerator;
 
-    // Used to determine hand strength
-    int* highCard(const Card originalArr[]);
-    int* pair(const Card originalArr[]);
-    int* twoPair(const Card originalArr[]);
-    int* trips(const Card originalArr[]);
-    int* straight(const Card originalArr[]);
-    int* flush(const Card originalArr[]);
-    int* fullHouse(const Card originalArr[]);
-    int* quads(const Card originalArr[]);
-    int* straightflush(const Card originalArr[], int* flushPtr);
-    void sortCardNumber(Card arr[]);
-    void setUpArrays(Card arr[], const Card originalArr[], int handScore[], int sizeHandScore);
+    // Used to determine hand strength 
+    /* All of the following member functions are static for optimization, they are using 
+    parameters rather than accesing private members for greater usability and readability */
+    static int* highCard(const Card originalArr[]);
+    static int* pair(const Card originalArr[]);
+    static int* twoPair(const Card originalArr[]);
+    static int* trips(const Card originalArr[]);
+    static int* straight(const Card originalArr[]);
+    static int* flush(const Card originalArr[]);
+    static int* fullHouse(const Card originalArr[]);
+    static int* quads(const Card originalArr[]);
+    static int* straightflush(const Card originalArr[], int* flushPtr);
+    static void sortCardNumber(Card arr[]);
+    static void setUpArrays(Card arr[], const Card originalArr[], int handScore[], int sizeHandScore);
 
     // Used to determine winner amongst all other player hands
-    std::vector<int> multipleWinners(const Player arr[], const int sizeOfVector);
-    void sortBy(std::string choice, Player arr[], int sizeOfArray);
-    int counterFor(std::string choice, const Player arr[], int sizeOfArray);
-    int compareKicker(std::string choice, const Player arr[], int sizeOfArray);
-    void setStats(Player arr[], int index, int points, int highCard, int k1, int k2, int k3, int k4);
+    static std::vector<int> multipleWinners(const Player arr[], const int sizeOfVector);
+    static void sortBy(std::string choice, Player arr[], int sizeOfArray);
+    static int counterFor(std::string choice, const Player arr[], int sizeOfArray);
+    static int compareKicker(std::string choice, const Player arr[], int sizeOfArray);
+    static void setStats(Player arr[], int index, int points, int highCard, int k1, int k2, int k3, int k4);
 };
 
 #endif

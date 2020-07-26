@@ -29,10 +29,10 @@ private:
     char firstSelection, secondSelection;
     bool sevenCardGame;
 
-    int selectPlayers5game(std::string question);
-    int selectPlayers7game(std::string question);
-    void processCardInfo(const Card arr[], const Player playerArr[], int start, int end, int index, bool sevenCardGame);
-    void dynamicallyGrowBorder(std::vector<int> v) const;
+    static int selectPlayers5game(std::string question);
+    static int selectPlayers7game(std::string question);
+    void processHandInfo(const Card arr[], const Player playerArr[], int start, int end, int index, bool sevenCardGame);
+    static void dynamicallyGrowBorder(std::vector<int> v);
 };
 
 #endif
