@@ -1,5 +1,6 @@
 # 7-And-5-Card-Poker-Hand-Evaluator 
 Evaluates 7 or 5 card poker hands and determines the winner.
+VIEW THIS VIDEO: https://youtu.be/WMILvJOCQbI
 
 ## 7 Card Poker Evaluator
 7 card poker evaluator refers to 5 community cards and 2 players cards. The program will determine the best 5 card combination and will display the strength of the hand. Additionally, you can choose from 1 to 23 players to deal cards to and the program will determine the winner or the players that tied. (23 players max since each player gets 2 distinct cards and there are 5 community cards. So, 5 cards and 23 players uses 51 cards of the 52 card deck)
